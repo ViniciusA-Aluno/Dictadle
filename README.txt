@@ -31,6 +31,10 @@ Estudante/Jogador: Acessa a plataforma para realizar os desafios de transcriçã
 Administrador: Acessa um painel restrito para cadastrar novos clipes de vídeo, definir o nível de dificuldade e inserir a transcrição oficial (gabarito).
 
 Divisão de papéis da equipe (para a primeira release):
-Vinícius (PO + DevOps)
-Vitor (QA)
-Matheus (Scrum master)
+PO (Vinícius): Redigir e priorizar o Product Backlog inicial detalhando as User Stories de autenticação e CRUD administrativo com critérios de aceite em Gherkin, formalizar a Definition of Done (DoD), estabelecer o Sprint Goal e preparar as notas da release ao final do ciclo.
+
+Scrum Master (Matheus): Configurar e manter o board no Jira/Azure com as colunas e labels exigidas, mediar a elaboração da planilha de riscos iniciais e acordos de trabalho da equipe, além de facilitar e documentar as atas de todas as cerimônias ágeis desta sprint.
+
+DevOps (Vinícius): Estruturar o repositório base no GitHub providenciando os templates e pull requests, redigir o README com as instruções para rodar o ambiente local e configurar o pipeline inicial de Integração Contínua (CI).
+
+QA (Vitor): Formular o Plano de Qualidade no Sprint 0 definindo as metas e métricas gerais, escrever os casos de teste específicos para validar os fluxos da Sprint 1, registrar as evidências de bugs encontrados e gerar o relatório de qualidade da release.
