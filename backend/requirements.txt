@@ -6,6 +6,7 @@ psycopg2-binary==2.9.9
 python-dotenv==1.0.1
 Werkzeug==3.0.3
 pyotp==2.9.0
+PyJWT==2.8.0
 
 # Testes
 pytest==8.2.2

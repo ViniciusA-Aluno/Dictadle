@@ -2,6 +2,7 @@ import os
 from flask import Flask
 from app.config import config_by_name
 from app.extensions import db, migrate, cors
+from app.routes.auth_routes import auth_bp
 
 def create_app(config_name=None):
     if config_name is None:
@@ -14,6 +15,9 @@ def create_app(config_name=None):
     db.init_app(app)
     migrate.init_app(app, db)
     cors.init_app(app, resources={r"/api/*": {"origins": "*"}})
+
+    # Registro de Blueprints da Sprint
+    app.register_blueprint(auth_bp)
 
     @app.route("/api/health", methods=["GET"])
     def health_check():
