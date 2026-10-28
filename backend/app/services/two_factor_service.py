@@ -1,4 +1,5 @@
 import pyotp
+from urllib.parse import unquote
 
 class TwoFactorService:
     @staticmethod
@@ -10,7 +11,7 @@ class TwoFactorService:
     def get_provisioning_uri(username: str, secret: str, issuer_name: str = "Dictadle") -> str:
         """Retorna o URI otpauth:// que pode ser lido por aplicativos autenticadores via QR Code."""
         totp = pyotp.TOTP(secret)
-        return totp.provisioning_uri(name=username, issuer_name=issuer_name)
+        return unquote(totp.provisioning_uri(name=username, issuer_name=issuer_name))
 
     @staticmethod
     def verify_token(secret: str, token: str, valid_window: int = 1) -> bool:

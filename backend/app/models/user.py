@@ -18,6 +18,17 @@ class User(db.Model):
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        if self.role is None:
+            self.role = "student"
+        if self.is_active is None:
+            self.is_active = True
+        if self.is_2fa_enabled is None:
+            self.is_2fa_enabled = False
+        if self.created_at is None:
+            self.created_at = datetime.utcnow()
+
     def set_password(self, password: str):
         self.password_hash = generate_password_hash(password)
 
@@ -40,5 +51,5 @@ class User(db.Model):
             "role": self.role,
             "is_active": self.is_active,
             "is_2fa_enabled": self.is_2fa_enabled,
-            "created_at": self.created_at.isoformat()
+            "created_at": self.created_at.isoformat() if self.created_at else None
         }
