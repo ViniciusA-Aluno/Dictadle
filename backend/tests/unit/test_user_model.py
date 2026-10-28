@@ -28,6 +28,18 @@ def test_user_2fa_lifecycle():
     assert user.is_2fa_enabled is False
     assert user.two_factor_secret is None
 
+def test_user_deactivation_lifecycle():
+    user = User(username="teste_deact", email="deact@teste.com")
+    assert user.is_active is True
+
+    # Desativação (soft delete)
+    user.deactivate()
+    assert user.is_active is False
+
+    # Reativação
+    user.activate()
+    assert user.is_active is True
+
 def test_user_to_dict():
     user = User(username="carlos", email="carlos@teste.com", role="admin")
     data = user.to_dict()
@@ -35,5 +47,12 @@ def test_user_to_dict():
     assert data["username"] == "carlos"
     assert data["email"] == "carlos@teste.com"
     assert data["role"] == "admin"
+    assert data["is_active"] is True
     assert "password_hash" not in data
     assert "two_factor_secret" not in data
+
+def test_user_deactivated_to_dict():
+    user = User(username="inativo", email="inativo@teste.com")
+    user.deactivate()
+    data = user.to_dict()
+    assert data["is_active"] is False

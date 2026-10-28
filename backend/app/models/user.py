@@ -43,6 +43,14 @@ class User(db.Model):
         self.two_factor_secret = None
         self.is_2fa_enabled = False
 
+    def deactivate(self):
+        """Desativa a conta do usuário (soft delete)."""
+        self.is_active = False
+
+    def activate(self):
+        """Reativa a conta do usuário."""
+        self.is_active = True
+
     def to_dict(self):
         return {
             "id": self.id,

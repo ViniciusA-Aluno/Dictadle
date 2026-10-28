@@ -181,7 +181,7 @@ def delete_user(user_id):
     if hard_delete:
         db.session.delete(user)
     else:
-        user.is_active = False
+        user.deactivate()
 
     db.session.commit()
 
