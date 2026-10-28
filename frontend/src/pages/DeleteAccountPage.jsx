@@ -12,16 +12,17 @@ import {
 
 export default function DeleteAccountPage({ currentUser, onBack, onAccountDeleted }) {
   const [confirmationText, setConfirmationText] = useState('');
-  const [isAcknowledged, setIsAcknowledged] = useState(false);
+  const [isAcknowledged, setIsAcknowledged] = useState(true);
   const [hardDelete, setHardDelete] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
 
-  // Exigir a digitação do nome de usuário para evitar cliques acidentais
-  const expectedText = currentUser?.username || 'EXCLUIR';
-  const isConfirmed = confirmationText.trim() === expectedText && isAcknowledged;
+  // Exigir a digitação da palavra "deletar" para confirmação da exclusão
+  const expectedText = 'deletar';
+  const isWordValid = confirmationText.trim().toLowerCase() === expectedText;
+  const isConfirmed = isWordValid && isAcknowledged;
 
   const handleDeleteAccount = async (e) => {
     e.preventDefault();
@@ -142,19 +143,31 @@ export default function DeleteAccountPage({ currentUser, onBack, onAccountDelete
             </span>
           </label>
 
-          {/* Campo de confirmação textual */}
+          {/* Campo de confirmação textual com a palavra 'deletar' */}
           <div>
             <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">
-              Para confirmar, digite <span className="text-rose-600 font-mono font-bold lowercase">{expectedText}</span> abaixo:
+              Para confirmar a exclusão, digite a palavra <span className="text-rose-600 font-mono font-bold lowercase">deletar</span> abaixo:
             </label>
             <input
               type="text"
               value={confirmationText}
               onChange={(e) => setConfirmationText(e.target.value)}
-              placeholder={expectedText}
+              placeholder="deletar"
+              autoFocus
               className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm outline-none focus:ring-2 focus:ring-rose-500 focus:border-rose-500 transition"
               required
             />
+            {confirmationText.length > 0 && !isWordValid && (
+              <p className="text-xs text-rose-500 mt-1.5">
+                Digite exatamente a palavra <strong>deletar</strong> para habilitar o botão de confirmação.
+              </p>
+            )}
+            {isWordValid && (
+              <p className="text-xs text-emerald-600 mt-1.5 flex items-center gap-1 font-medium">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                Palavra confirmada! O botão de exclusão está habilitado.
+              </p>
+            )}
           </div>
 
           {/* Botões de Ação */}
