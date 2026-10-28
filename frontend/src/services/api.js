@@ -24,6 +24,7 @@ export const authService = {
     api.post('/auth/register', { username, email, password, role }),
   setup2FA: (userId) => api.post('/auth/2fa/setup', { user_id: userId }),
   confirmSetup2FA: (userId, code) => api.post('/auth/2fa/confirm-setup', { user_id: userId, code }),
+  deleteAccount: (userId) => api.delete(`/auth/users/${userId}`),
 };
 
 export default api;

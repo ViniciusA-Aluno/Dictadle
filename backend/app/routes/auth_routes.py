@@ -88,7 +88,7 @@ def login_2fa():
     if not payload or payload.get("type") != "2fa_temp":
         return jsonify({"error": "Sessão de verificação 2FA expirada ou inválida. Faça login novamente."}), 401
 
-    user = User.query.get(payload.get("sub"))
+    user = db.session.get(User, payload.get("sub")) if hasattr(db.session, "get") else User.query.get(payload.get("sub"))
     if not user or not user.is_active:
         return jsonify({"error": "Usuário não encontrado ou conta inativa."}), 404
 
@@ -111,7 +111,7 @@ def setup_2fa():
     data = request.get_json() or {}
     user_id = data.get("user_id")
 
-    user = User.query.get(user_id)
+    user = db.session.get(User, user_id) if hasattr(db.session, "get") else User.query.get(user_id)
     if not user:
         return jsonify({"error": "Usuário não encontrado."}), 404
 
@@ -135,7 +135,7 @@ def confirm_setup_2fa():
     user_id = data.get("user_id")
     code = data.get("code")
 
-    user = User.query.get(user_id)
+    user = db.session.get(User, user_id) if hasattr(db.session, "get") else User.query.get(user_id)
     if not user or not user.two_factor_secret:
         return jsonify({"error": "Configuração de 2FA não iniciada."}), 400
 
@@ -149,3 +149,65 @@ def confirm_setup_2fa():
         "message": "Autenticação em dois fatores ativada com sucesso!",
         "is_2fa_enabled": True
     }), 200
+
+@auth_bp.route("/users/<int:user_id>", methods=["DELETE"])
+def delete_user(user_id):
+    """
+    Rota para exclusão de conta de usuário.
+    Realiza soft delete (is_active = False) por padrão, ou hard delete se ?hard=true for passado.
+    Valida token de autenticação caso o header Authorization seja fornecido.
+    """
+    # Verificação opcional de autorização por token JWT
+    auth_header = request.headers.get("Authorization")
+    if auth_header and auth_header.startswith("Bearer "):
+        token = auth_header.split(" ", 1)[1]
+        payload = TokenService.decode_token(token)
+        if not payload or payload.get("type") != "access":
+            return jsonify({"error": "Token de autenticação inválido ou expirado."}), 401
+        
+        # Apenas o próprio usuário ou administradores podem excluir a conta
+        token_user_id = payload.get("sub")
+        role = payload.get("role")
+        if token_user_id != user_id and role != "admin":
+            return jsonify({"error": "Acesso não autorizado para excluir este usuário."}), 403
+
+    user = db.session.get(User, user_id) if hasattr(db.session, "get") else User.query.get(user_id)
+    if not user:
+        return jsonify({"error": "Usuário não encontrado."}), 404
+
+    data = request.get_json(silent=True) or {}
+    hard_delete = request.args.get("hard", "false").lower() in ("true", "1") or data.get("hard_delete", False)
+
+    if hard_delete:
+        db.session.delete(user)
+    else:
+        user.is_active = False
+
+    db.session.commit()
+
+    return jsonify({
+        "message": "Conta de usuário excluída com sucesso!",
+        "user_id": user_id,
+        "is_active": False if not hard_delete else None
+    }), 200
+
+@auth_bp.route("/account", methods=["DELETE"])
+def delete_account():
+    """
+    Rota para o usuário logado excluir a própria conta via Bearer token ou identificação no payload.
+    """
+    auth_header = request.headers.get("Authorization")
+    data = request.get_json(silent=True) or {}
+    user_id = data.get("user_id")
+
+    if auth_header and auth_header.startswith("Bearer "):
+        token = auth_header.split(" ", 1)[1]
+        payload = TokenService.decode_token(token)
+        if not payload or payload.get("type") != "access":
+            return jsonify({"error": "Token de autenticação inválido ou expirado."}), 401
+        user_id = payload.get("sub")
+
+    if not user_id:
+        return jsonify({"error": "Identificação do usuário é obrigatória."}), 400
+
+    return delete_user(user_id)
