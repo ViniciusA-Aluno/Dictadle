@@ -9,6 +9,27 @@ auth_bp = Blueprint("auth", __name__, url_prefix="/api/auth")
 
 EMAIL_REGEX = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
+def get_authenticated_user():
+    """
+    Função utilitária para extrair e validar o usuário autenticado a partir do Bearer JWT.
+    Retorna (user, None) em caso de sucesso, ou (None, (json_response, status_code)) em erro.
+    """
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        return None, (jsonify({"error": "Token de autenticação não fornecido."}), 401)
+
+    token = auth_header.split(" ", 1)[1]
+    payload = TokenService.decode_token(token)
+    if not payload or payload.get("type") != "access":
+        return None, (jsonify({"error": "Token de autenticação inválido ou expirado."}), 401)
+
+    user_id = payload.get("sub")
+    user = db.session.get(User, user_id) if hasattr(db.session, "get") else User.query.get(user_id)
+    if not user or not user.is_active:
+        return None, (jsonify({"error": "Usuário não encontrado ou conta inativa."}), 401)
+
+    return user, None
+
 @auth_bp.route("/register", methods=["POST"])
 def register():
     """
@@ -170,6 +191,109 @@ def confirm_setup_2fa():
         "message": "Autenticação em dois fatores ativada com sucesso!",
         "is_2fa_enabled": True
     }), 200
+
+# ==========================================
+# ENDPOINTS DA US-04: CONFIGURAÇÕES DO USUÁRIO
+# ==========================================
+
+@auth_bp.route("/me", methods=["GET"])
+def get_me():
+    """
+    Cenário 1 e 12: Retorna os dados do usuário autenticado para pré-carregamento.
+    """
+    user, error_response = get_authenticated_user()
+    if error_response:
+        return error_response
+
+    return jsonify({"user": user.to_dict()}), 200
+
+@auth_bp.route("/profile", methods=["PUT"])
+def update_profile():
+    """
+    Cenários 2 a 6 e 12: Atualização de username e e-mail com checagem de unicidade e formato.
+    """
+    user, error_response = get_authenticated_user()
+    if error_response:
+        return error_response
+
+    data = request.get_json() or {}
+    new_username = str(data.get("username", "")).strip()
+    new_email = str(data.get("email", "")).strip().lower()
+
+    if not new_username or not new_email:
+        return jsonify({"error": "Preencha nome de usuário e e-mail."}), 400
+
+    # Cenário 6: Validação de e-mail com formato inválido
+    if not EMAIL_REGEX.match(new_email):
+        return jsonify({"error": "Informe um e-mail válido"}), 400
+
+    # Cenário 4: Tentativa de alteração para username já existente (de outro usuário)
+    if new_username != user.username:
+        conflict_user = User.query.filter(User.username == new_username, User.id != user.id).first()
+        if conflict_user:
+            return jsonify({"error": "Este username já está em uso"}), 409
+
+    # Cenário 5: Tentativa de alteração para e-mail já existente (de outro usuário)
+    if new_email != user.email:
+        conflict_email = User.query.filter(User.email == new_email, User.id != user.id).first()
+        if conflict_email:
+            return jsonify({"error": "Este e-mail já está cadastrado"}), 409
+
+    user.username = new_username
+    user.email = new_email
+    db.session.commit()
+
+    return jsonify({
+        "message": "Dados atualizados com sucesso",
+        "user": user.to_dict()
+    }), 200
+
+@auth_bp.route("/change-password", methods=["PUT"])
+def change_password():
+    """
+    Cenários 7 a 12: Alteração de senha com validação de senha atual, complexidade e invalidação de sessão.
+    """
+    user, error_response = get_authenticated_user()
+    if error_response:
+        return error_response
+
+    data = request.get_json() or {}
+    current_password = str(data.get("current_password", ""))
+    new_password = str(data.get("new_password", ""))
+
+    if not current_password or not new_password:
+        return jsonify({"error": "Informe a senha atual e a nova senha."}), 400
+
+    # Cenário 8: Senha atual incorreta
+    if not user.check_password(current_password):
+        return jsonify({"error": "A senha atual está incorreta"}), 400
+
+    # Cenário 11: Nova senha idêntica à senha atual
+    if current_password == new_password or user.check_password(new_password):
+        return jsonify({"error": "A nova senha deve ser diferente da senha atual"}), 400
+
+    # Cenário 10: Requisitos mínimos de segurança
+    if len(new_password) < 8 or not re.search(r"[A-Za-z]", new_password) or not re.search(r"\d", new_password):
+        return jsonify({
+            "error": "A nova senha deve conter no mínimo 8 caracteres, incluindo pelo menos uma letra e um número."
+        }), 400
+
+    # Cenário 7: Atualiza a senha com o novo hash
+    user.set_password(new_password)
+    db.session.commit()
+
+    # Reemite token JWT para renovação de sessão (invalida implicitamente tokens velhos se houver verificação)
+    new_access_token = TokenService.generate_access_token(user.id, user.role)
+
+    return jsonify({
+        "message": "Senha alterada com sucesso",
+        "access_token": new_access_token,
+        "user": user.to_dict()
+    }), 200
+
+# ==========================================
+# ENDPOINTS DE EXCLUSÃO DE CONTA
+# ==========================================
 
 @auth_bp.route("/users/<int:user_id>", methods=["DELETE"])
 def delete_user(user_id):
