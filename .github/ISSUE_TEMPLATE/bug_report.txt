@@ -1,0 +1,57 @@
+TÍTULO: [BUG] <Título curto do problema>
+
+RELEASE: <R1 | R2 | R3 | R4>        SPRINT: <0 a 7>
+SEVERIDADE: <Crítica | Alta | Média | Baixa>
+PRIORIDADE: <Alta | Média | Baixa>
+RESPONSÁVEL: <@usuario-github>      REPORTADO POR: <@usuario-github (QA)>
+US RELACIONADA: <#número da issue, se houver>
+
+----------------------------------------------------------------
+DESCRIÇÃO
+----------------------------------------------------------------
+<O que está acontecendo de errado, em uma ou duas frases>
+
+----------------------------------------------------------------
+AMBIENTE
+----------------------------------------------------------------
+Ambiente: <local | homologação | produção>
+Navegador / versão: <ex.: Chrome 130>
+Sistema operacional: <ex.: Windows 11>
+Versão / commit / branch: <ex.: main, a1b2c3d>
+
+----------------------------------------------------------------
+PASSOS PARA REPRODUZIR
+----------------------------------------------------------------
+1. <passo 1>
+2. <passo 2>
+3. <passo 3>
+
+----------------------------------------------------------------
+RESULTADO ESPERADO
+----------------------------------------------------------------
+<O que deveria acontecer>
+
+----------------------------------------------------------------
+RESULTADO OBTIDO
+----------------------------------------------------------------
+<O que aconteceu de fato>
+
+----------------------------------------------------------------
+EVIDÊNCIAS
+----------------------------------------------------------------
+<Capturas de tela, vídeo, logs ou mensagens de erro>
+
+----------------------------------------------------------------
+CRITÉRIO DE CORREÇÃO (Gherkin, opcional)
+----------------------------------------------------------------
+  Dado que <contexto>
+  Quando <ação>
+  Então <comportamento correto>
+
+----------------------------------------------------------------
+CHECKLIST DE ENCERRAMENTO
+----------------------------------------------------------------
+[ ] Causa identificada e registrada nos comentários
+[ ] Correção feita via Pull Request que referencia esta issue
+[ ] Teste de regressão criado ou atualizado
+[ ] Correção verificada pelo QA
