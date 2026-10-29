@@ -300,20 +300,20 @@ def change_password():
     }), 200
 
 # ==========================================
-# ENDPOINT DA US-05: LISTAGEM DE USUÁRIOS (ADMIN)
+# ENDPOINTS DA US-05: GESTÃO E LISTAGEM DE USUÁRIOS (ADMIN)
 # ==========================================
 
 @auth_bp.route("/users", methods=["GET"])
 def list_users():
     """
-    US-05: Listagem de usuários paginada (10 por página), com busca e filtro por role.
+    US-05: Listagem de usuários paginada (10 por página), com busca e filtro por role e status.
     Acesso restrito para usuários com perfil 'admin'.
     """
     user, error_response = get_authenticated_user()
     if error_response:
         return error_response
 
-    # Cenário 6: Bloqueio para perfil Estudante
+    # Bloqueio para perfil que não seja Administrador
     if user.role != "admin":
         return jsonify({"error": "Acesso restrito para administradores."}), 403
 
@@ -322,22 +322,29 @@ def list_users():
     page, per_page = sanitize_pagination_params(page_raw, per_page_raw, default_per_page=10)
     search = request.args.get("search", "", type=str).strip()
     role = request.args.get("role", "", type=str).strip().lower()
+    status = request.args.get("status", "", type=str).strip().lower()
 
     query = User.query
 
-    # Cenário 3: Filtrar por termo de busca em username ou email
+    # Filtrar por termo de busca em username ou email
     if search:
         search_pattern = f"%{search}%"
         query = query.filter((User.username.ilike(search_pattern)) | (User.email.ilike(search_pattern)))
 
-    # Cenário 4: Filtrar por perfil de acesso
+    # Filtrar por perfil de acesso
     if role and role != "all":
         query = query.filter(User.role == role)
+
+    # Filtrar por status ativo/inativo
+    if status == "active":
+        query = query.filter(User.is_active.is_(True))
+    elif status in ("inactive", "disabled"):
+        query = query.filter(User.is_active.is_(False))
 
     query = query.order_by(User.created_at.desc(), User.id.desc())
     pagination = query.paginate(page=page, per_page=per_page, error_out=False)
 
-    # Cenário 8: Proteção de dados sensíveis (sem senha_hash nem segredo 2FA)
+    # Proteção de dados sensíveis (sem senha_hash nem segredo 2FA)
     users_data = [u.to_dict() for u in pagination.items]
 
     return jsonify({
@@ -350,6 +357,111 @@ def list_users():
         "has_next": pagination.has_next
     }), 200
 
+@auth_bp.route("/users/<int:user_id>", methods=["GET"])
+def get_user_by_id(user_id):
+    """
+    Retorna os dados de um usuário específico para visualização ou edição.
+    Acesso permitido para administradores ou para o próprio usuário autenticado.
+    """
+    user, error_response = get_authenticated_user()
+    if error_response:
+        return error_response
+
+    if user.role != "admin" and user.id != user_id:
+        return jsonify({"error": "Acesso restrito para administradores."}), 403
+
+    target_user = db.session.get(User, user_id) if hasattr(db.session, "get") else User.query.get(user_id)
+    if not target_user:
+        return jsonify({"error": "Usuário não encontrado."}), 404
+
+    return jsonify({"user": target_user.to_dict()}), 200
+
+@auth_bp.route("/users/<int:user_id>", methods=["PUT"])
+def update_user(user_id):
+    """
+    Permite ao Administrador atualizar os dados de qualquer usuário:
+    username, email, role, is_active e redefinição opcional de senha.
+    Protege contra desativação ou rebaixamento do último administrador ativo.
+    """
+    user, error_response = get_authenticated_user()
+    if error_response:
+        return error_response
+
+    if user.role != "admin":
+        return jsonify({"error": "Acesso restrito para administradores."}), 403
+
+    target_user = db.session.get(User, user_id) if hasattr(db.session, "get") else User.query.get(user_id)
+    if not target_user:
+        return jsonify({"error": "Usuário não encontrado."}), 404
+
+    data = request.get_json() or {}
+
+    # 1. Atualização do Nome de Usuário
+    if "username" in data:
+        new_username = str(data.get("username", "")).strip()
+        is_valid_u, user_err = validate_username(new_username)
+        if not is_valid_u:
+            return jsonify({"error": user_err}), 400
+
+        if new_username != target_user.username:
+            conflict = User.query.filter(User.username == new_username, User.id != user_id).first()
+            if conflict:
+                return jsonify({"error": "Este username já está em uso"}), 409
+            target_user.username = new_username
+
+    # 2. Atualização do E-mail
+    if "email" in data:
+        new_email = str(data.get("email", "")).strip().lower()
+        is_valid_e, email_err = validate_email(new_email)
+        if not is_valid_e:
+            return jsonify({"error": email_err}), 400
+
+        if new_email != target_user.email:
+            conflict = User.query.filter(User.email == new_email, User.id != user_id).first()
+            if conflict:
+                return jsonify({"error": "Este e-mail já está cadastrado"}), 409
+            target_user.email = new_email
+
+    # 3. Atualização do Perfil (Role)
+    if "role" in data:
+        new_role = str(data.get("role", "")).strip().lower()
+        if new_role not in ["student", "admin"]:
+            return jsonify({"error": "Perfil inválido. Deve ser 'student' ou 'admin'."}), 400
+
+        # Protege rebaixamento do último administrador ativo
+        if target_user.role == "admin" and new_role != "admin" and target_user.is_active:
+            active_admins = User.query.filter(User.role == "admin", User.is_active.is_(True)).count()
+            if active_admins <= 1:
+                return jsonify({"error": "Não é possível alterar o perfil do único administrador ativo do sistema."}), 400
+
+        target_user.role = new_role
+
+    # 4. Atualização de Status (is_active)
+    if "is_active" in data:
+        new_is_active = bool(data.get("is_active"))
+        # Protege desativação do último administrador ativo
+        if target_user.role == "admin" and target_user.is_active and not new_is_active:
+            active_admins = User.query.filter(User.role == "admin", User.is_active.is_(True)).count()
+            if active_admins <= 1:
+                return jsonify({"error": "Não é possível desativar o único administrador ativo do sistema."}), 400
+
+        target_user.is_active = new_is_active
+
+    # 5. Redefinição opcional de Senha por Admin
+    if "password" in data and data.get("password"):
+        new_pass = str(data.get("password", ""))
+        is_valid_p, pass_err = validate_password_complexity(new_pass)
+        if not is_valid_p:
+            return jsonify({"error": pass_err}), 400
+        target_user.set_password(new_pass)
+
+    db.session.commit()
+
+    return jsonify({
+        "message": "Dados do usuário atualizados com sucesso.",
+        "user": target_user.to_dict()
+    }), 200
+
 # ==========================================
 # ENDPOINTS DE EXCLUSÃO DE CONTA
 # ==========================================
@@ -360,6 +472,7 @@ def delete_user(user_id):
     Rota para exclusão de conta de usuário.
     Realiza soft delete (is_active = False) por padrão, ou hard delete se ?hard=true for passado.
     Valida token de autenticação caso o header Authorization seja fornecido.
+    Protege contra a exclusão do último administrador ativo.
     """
     auth_header = request.headers.get("Authorization")
     if auth_header and auth_header.startswith("Bearer "):
@@ -367,7 +480,7 @@ def delete_user(user_id):
         payload = TokenService.decode_token(token)
         if not payload or payload.get("type") != "access":
             return jsonify({"error": "Token de autenticação inválido ou expirado."}), 401
-        
+
         token_user_id = payload.get("sub")
         role = payload.get("role")
         if token_user_id != user_id and role != "admin":
@@ -376,6 +489,12 @@ def delete_user(user_id):
     user = db.session.get(User, user_id) if hasattr(db.session, "get") else User.query.get(user_id)
     if not user:
         return jsonify({"error": "Usuário não encontrado."}), 404
+
+    # Proteção: Impede a exclusão do único administrador ativo
+    if user.role == "admin" and user.is_active:
+        active_admins = User.query.filter(User.role == "admin", User.is_active.is_(True)).count()
+        if active_admins <= 1:
+            return jsonify({"error": "Não é possível excluir o único administrador ativo do sistema."}), 400
 
     data = request.get_json(silent=True) or {}
     hard_delete = request.args.get("hard", "false").lower() in ("true", "1") or data.get("hard_delete", False)

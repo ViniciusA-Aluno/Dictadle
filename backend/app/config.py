@@ -1,7 +1,12 @@
 import os
 from dotenv import load_dotenv
 
-load_dotenv()
+basedir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+dotenv_backend = os.path.join(basedir, ".env")
+if os.path.exists(dotenv_backend):
+    load_dotenv(dotenv_backend)
+else:
+    load_dotenv()
 
 class Config:
     SECRET_KEY = os.getenv("SECRET_KEY", "dictadle_default_secret_key")
