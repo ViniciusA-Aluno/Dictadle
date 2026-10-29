@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { authService, setAuthToken } from '../services/api';
-import { Lock, Mail, ShieldCheck, ArrowLeft, KeyRound, AlertCircle, Loader2 } from 'lucide-react';
+import { Lock, Mail, ShieldCheck, ArrowLeft, KeyRound, AlertCircle, Loader2, CheckCircle2, UserPlus } from 'lucide-react';
 
-export default function LoginPage({ onLoginSuccess }) {
+export default function LoginPage({ onLoginSuccess, onNavigateToRegister, initialSuccessMessage }) {
   // Estados de navegação entre etapas: 'credentials' ou '2fa'
   const [step, setStep] = useState('credentials');
 
@@ -15,11 +15,13 @@ export default function LoginPage({ onLoginSuccess }) {
   // Estados visuais
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [successNotice, setSuccessNotice] = useState(initialSuccessMessage || null);
 
   // Etapa 1: Validação de e-mail e senha
   const handleCredentialsSubmit = async (e) => {
     e.preventDefault();
     setError(null);
+    setSuccessNotice(null);
     setLoading(true);
 
     try {
@@ -99,6 +101,14 @@ export default function LoginPage({ onLoginSuccess }) {
           </p>
         </div>
 
+        {/* Mensagem de Sucesso (ex.: após cadastro) */}
+        {successNotice && (
+          <div className="mb-5 p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-start gap-2.5 text-xs text-emerald-800 animate-fadeIn">
+            <CheckCircle2 className="w-4 h-4 mt-0.5 flex-shrink-0 text-emerald-600" />
+            <span>{successNotice}</span>
+          </div>
+        )}
+
         {/* Mensagem de Erro */}
         {error && (
           <div className="mb-5 p-3.5 bg-rose-50 border border-rose-200 rounded-xl flex items-start gap-2.5 text-xs text-rose-700 animate-fadeIn">
@@ -109,56 +119,70 @@ export default function LoginPage({ onLoginSuccess }) {
 
         {/* Formulário: Etapa 1 (E-mail e Senha) */}
         {step === 'credentials' && (
-          <form onSubmit={handleCredentialsSubmit} className="space-y-4">
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">
-                E-mail
-              </label>
-              <div className="relative">
-                <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="seu.email@exemplo.com"
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 text-sm outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
-                  required
-                />
+          <>
+            <form onSubmit={handleCredentialsSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">
+                  E-mail
+                </label>
+                <div className="relative">
+                  <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="seu.email@exemplo.com"
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 text-sm outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+                    required
+                  />
+                </div>
               </div>
-            </div>
 
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">
-                Senha
-              </label>
-              <div className="relative">
-                <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 text-sm outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
-                  required
-                />
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">
+                  Senha
+                </label>
+                <div className="relative">
+                  <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 text-sm outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+                    required
+                  />
+                </div>
               </div>
-            </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full mt-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl transition shadow-md flex items-center justify-center gap-2 disabled:opacity-50"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Verificando...</span>
-                </>
-              ) : (
-                <span>Entrar</span>
-              )}
-            </button>
-          </form>
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full mt-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl transition shadow-md flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Verificando...</span>
+                  </>
+                ) : (
+                  <span>Entrar</span>
+                )}
+              </button>
+            </form>
+
+            {/* Alternar para tela de Cadastro */}
+            <div className="mt-6 pt-5 border-t border-slate-100 text-center">
+              <button
+                type="button"
+                onClick={() => onNavigateToRegister && onNavigateToRegister()}
+                className="text-xs text-indigo-600 hover:text-indigo-800 font-semibold inline-flex items-center gap-1.5 transition"
+              >
+                <UserPlus className="w-3.5 h-3.5" />
+                <span>Ainda não tem conta? Cadastre-se</span>
+              </button>
+            </div>
+          </>
         )}
 
         {/* Formulário: Etapa 2 (Desafio de Código 2FA) */}

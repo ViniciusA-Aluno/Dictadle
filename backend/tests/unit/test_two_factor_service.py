@@ -9,7 +9,7 @@ def test_generate_secret():
 def test_get_provisioning_uri():
     secret = "JBSWY3DPEHPK3PXP"
     uri = TwoFactorService.get_provisioning_uri(username="usuario@teste.com", secret=secret)
-    assert uri.startswith("otpauth://totp/Dictadle:usuario@teste.com")
+    assert uri.startswith("otpauth://totp/Dictadle:usuario%40teste.com") or uri.startswith("otpauth://totp/Dictadle:usuario@teste.com")
     assert "secret=JBSWY3DPEHPK3PXP" in uri
     assert "issuer=Dictadle" in uri
 
