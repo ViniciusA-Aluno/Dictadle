@@ -5,6 +5,15 @@ from app.models.user import User
 from app.services.two_factor_service import TwoFactorService
 from app.services.token_service import TokenService
 
+from app.services.validators import (
+    validate_email,
+    validate_password_complexity,
+    validate_username,
+    validate_password_change,
+    sanitize_pagination_params,
+    EMAIL_REGEX
+)
+
 auth_bp = Blueprint("auth", __name__, url_prefix="/api/auth")
 
 EMAIL_REGEX = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
@@ -46,14 +55,14 @@ def register():
         return jsonify({"error": "Campo obrigatório. Preencha nome de usuário, e-mail e senha."}), 400
 
     # Cenário 3: Validação de formato de e-mail inválido
-    if not EMAIL_REGEX.match(email):
-        return jsonify({"error": "Informe um e-mail válido."}), 400
+    is_valid_email, email_err = validate_email(email)
+    if not is_valid_email:
+        return jsonify({"error": email_err}), 400
 
     # Cenário 4: Senha fora dos padrões de complexidade (mínimo 8 caracteres, ao menos uma letra e um número)
-    if len(password) < 8 or not re.search(r"[A-Za-z]", password) or not re.search(r"\d", password):
-        return jsonify({
-            "error": "A senha deve conter no mínimo 8 caracteres, incluindo pelo menos uma letra e um número."
-        }), 400
+    is_valid_pass, pass_err = validate_password_complexity(password)
+    if not is_valid_pass:
+        return jsonify({"error": pass_err}), 400
 
     # Cenário 2: Tentativa de cadastro com e-mail já existente
     if User.query.filter_by(email=email).first():
@@ -224,7 +233,8 @@ def update_profile():
         return jsonify({"error": "Preencha nome de usuário e e-mail."}), 400
 
     # Cenário 6: Validação de e-mail com formato inválido
-    if not EMAIL_REGEX.match(new_email):
+    is_valid_email, _ = validate_email(new_email)
+    if not is_valid_email:
         return jsonify({"error": "Informe um e-mail válido"}), 400
 
     # Cenário 4: Tentativa de alteração para username já existente (de outro usuário)
@@ -264,19 +274,17 @@ def change_password():
     if not current_password or not new_password:
         return jsonify({"error": "Informe a senha atual e a nova senha."}), 400
 
-    # Cenário 8: Senha atual incorreta
-    if not user.check_password(current_password):
-        return jsonify({"error": "A senha atual está incorreta"}), 400
+    # Cenários 8, 10 e 11: Validação via serviço de validação
+    is_valid_change, change_err = validate_password_change(
+        current_password,
+        new_password,
+        is_current_password_valid=user.check_password(current_password)
+    )
+    if not is_valid_change:
+        return jsonify({"error": change_err}), 400
 
-    # Cenário 11: Nova senha idêntica à senha atual
-    if current_password == new_password or user.check_password(new_password):
+    if user.check_password(new_password):
         return jsonify({"error": "A nova senha deve ser diferente da senha atual"}), 400
-
-    # Cenário 10: Requisitos mínimos de segurança
-    if len(new_password) < 8 or not re.search(r"[A-Za-z]", new_password) or not re.search(r"\d", new_password):
-        return jsonify({
-            "error": "A nova senha deve conter no mínimo 8 caracteres, incluindo pelo menos uma letra e um número."
-        }), 400
 
     # Cenário 7: Atualiza a senha com o novo hash
     user.set_password(new_password)
@@ -309,15 +317,11 @@ def list_users():
     if user.role != "admin":
         return jsonify({"error": "Acesso restrito para administradores."}), 403
 
-    page = request.args.get("page", 1, type=int)
-    per_page = request.args.get("per_page", 10, type=int)
+    page_raw = request.args.get("page", 1)
+    per_page_raw = request.args.get("per_page", 10)
+    page, per_page = sanitize_pagination_params(page_raw, per_page_raw, default_per_page=10)
     search = request.args.get("search", "", type=str).strip()
     role = request.args.get("role", "", type=str).strip().lower()
-
-    if page < 1:
-        page = 1
-    if per_page < 1:
-        per_page = 10
 
     query = User.query
 
