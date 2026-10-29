@@ -14,9 +14,12 @@ from app.models.user import User
 def seed_admin(
     username=os.getenv("ADMIN_DEFAULT_USER", "admin"),
     email=os.getenv("ADMIN_DEFAULT_EMAIL", "admin@dictadle.com"),
-    password=os.getenv("ADMIN_DEFAULT_PASSWORD", "Admin12345")
+    password=os.getenv("ADMIN_DEFAULT_PASSWORD", "Admin12345"),
+    app=None
 ):
-    app = create_app()
+    if app is None:
+        app = create_app()
+
     with app.app_context():
         db.create_all()
 
@@ -26,17 +29,19 @@ def seed_admin(
             admin.set_password(password)
             db.session.add(admin)
             db.session.commit()
+            admin_id = admin.id
             print(f"[SUCESSO] Administrador '{username}' ({email}) criado com sucesso!")
             print(f"Credenciais padrão -> E-mail: {email} | Senha: {password}")
-            return admin
+            return admin_id
         else:
             existing_user.role = "admin"
             existing_user.is_active = True
             existing_user.set_password(password)
             db.session.commit()
+            admin_id = existing_user.id
             print(f"[ATUALIZADO] Usuário '{existing_user.username}' ({existing_user.email}) atualizado para Administrador ativo!")
             print(f"Credenciais atualizadas -> E-mail: {existing_user.email} | Senha: {password}")
-            return existing_user
+            return admin_id
 
 if __name__ == "__main__":
     u = sys.argv[1] if len(sys.argv) > 1 else "admin"

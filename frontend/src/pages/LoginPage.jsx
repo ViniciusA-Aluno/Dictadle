@@ -1,6 +1,18 @@
 import React, { useState } from 'react';
 import { authService, setAuthToken } from '../services/api';
-import { Lock, Mail, ShieldCheck, ArrowLeft, KeyRound, AlertCircle, Loader2, CheckCircle2, UserPlus } from 'lucide-react';
+import {
+  Lock,
+  Mail,
+  ShieldCheck,
+  ArrowLeft,
+  KeyRound,
+  AlertCircle,
+  Loader2,
+  CheckCircle2,
+  UserPlus,
+  Eye,
+  EyeOff,
+} from 'lucide-react';
 
 export default function LoginPage({ onLoginSuccess, onNavigateToRegister, initialSuccessMessage }) {
   // Estados de navegação entre etapas: 'credentials' ou '2fa'
@@ -9,6 +21,7 @@ export default function LoginPage({ onLoginSuccess, onNavigateToRegister, initia
   // Campos do formulário
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [twoFactorCode, setTwoFactorCode] = useState('');
   const [tempToken, setTempToken] = useState('');
 
@@ -145,13 +158,25 @@ export default function LoginPage({ onLoginSuccess, onNavigateToRegister, initia
                 <div className="relative">
                   <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
                   <input
-                    type="password"
+                    type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 text-sm outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+                    className="w-full pl-10 pr-11 py-2.5 rounded-xl border border-slate-300 text-sm outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
                     required
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3.5 top-3 text-slate-400 hover:text-slate-600 transition p-0.5 focus:outline-none"
+                    title={showPassword ? 'Ocultar senha' : 'Exibir senha'}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
+                  </button>
                 </div>
               </div>
 
