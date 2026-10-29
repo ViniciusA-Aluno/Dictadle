@@ -29,8 +29,10 @@ export const authService = {
   changePassword: (current_password, new_password) =>
     api.put('/auth/change-password', { current_password, new_password }),
   deleteAccount: (userId, hard = false) =>
-    api.delete(`/auth/users/${userId}${hard ? '?hard=true' : ''}`),
-  getUsers: (params) => api.get('/auth/users', { params }),
+    api.delete(`/users/${userId}${hard ? '?hard=true' : ''}`),
+  getUsers: (params) => api.get('/users', { params }),
+  getUserById: (userId) => api.get(`/users/${userId}`),
+  updateUser: (userId, data) => api.put(`/users/${userId}`, data),
 };
 
 export default api;
