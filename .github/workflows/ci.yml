@@ -33,7 +33,7 @@ jobs:
       - name: Run Pytest Suite
         env:
           FLASK_ENV: testing
-          TEST_DATABASE_URI: sqlite:///:memory:
+          TEST_DATABASE_URI: "sqlite:///:memory:"
           SECRET_KEY: ci_secret_key_testing_dictadle
         run: |
           python -m pytest tests -v
