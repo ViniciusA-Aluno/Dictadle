@@ -24,6 +24,10 @@ export const authService = {
     api.post('/auth/register', { username, email, password, role }),
   setup2FA: (userId) => api.post('/auth/2fa/setup', { user_id: userId }),
   confirmSetup2FA: (userId, code) => api.post('/auth/2fa/confirm-setup', { user_id: userId, code }),
+  getProfile: () => api.get('/auth/me'),
+  updateProfile: (username, email) => api.put('/auth/profile', { username, email }),
+  changePassword: (current_password, new_password) =>
+    api.put('/auth/change-password', { current_password, new_password }),
   deleteAccount: (userId, hard = false) =>
     api.delete(`/auth/users/${userId}${hard ? '?hard=true' : ''}`),
 };
