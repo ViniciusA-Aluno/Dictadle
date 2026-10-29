@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
 import DeleteAccountPage from './pages/DeleteAccountPage';
 import { setAuthToken } from './services/api';
 import { UserCheck, LogOut, Shield, ShieldCheck, Trash2 } from 'lucide-react';
@@ -7,6 +8,8 @@ import { UserCheck, LogOut, Shield, ShieldCheck, Trash2 } from 'lucide-react';
 export default function App() {
   const [currentUser, setCurrentUser] = useState(null);
   const [currentPage, setCurrentPage] = useState('home');
+  const [authScreen, setAuthScreen] = useState('login'); // 'login' | 'register'
+  const [loginSuccessNotice, setLoginSuccessNotice] = useState(null);
 
   const handleLoginSuccess = (user, token) => {
     setCurrentUser(user);
@@ -17,15 +20,41 @@ export default function App() {
     setAuthToken(null);
     setCurrentUser(null);
     setCurrentPage('home');
+    setAuthScreen('login');
+    setLoginSuccessNotice(null);
   };
 
   const handleAccountDeleted = () => {
     setCurrentUser(null);
     setCurrentPage('home');
+    setAuthScreen('login');
   };
 
+  // Cenário 8: Se já possui sessão ativa, o usuário sempre vê a tela inicial do perfil (redirecionado de login/register)
   if (!currentUser) {
-    return <LoginPage onLoginSuccess={handleLoginSuccess} />;
+    if (authScreen === 'register') {
+      return (
+        <RegisterPage
+          onNavigateToLogin={(fromSuccess = false, msg = null) => {
+            if (fromSuccess && msg) {
+              setLoginSuccessNotice(msg);
+            }
+            setAuthScreen('login');
+          }}
+        />
+      );
+    }
+
+    return (
+      <LoginPage
+        onLoginSuccess={handleLoginSuccess}
+        onNavigateToRegister={() => {
+          setLoginSuccessNotice(null);
+          setAuthScreen('register');
+        }}
+        initialSuccessMessage={loginSuccessNotice}
+      />
+    );
   }
 
   if (currentPage === 'delete_account') {
