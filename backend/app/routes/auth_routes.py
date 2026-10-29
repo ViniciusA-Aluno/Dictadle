@@ -1,3 +1,4 @@
+import re
 from flask import Blueprint, request, jsonify
 from app.extensions import db
 from app.models.user import User
@@ -6,28 +7,48 @@ from app.services.token_service import TokenService
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/api/auth")
 
+EMAIL_REGEX = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+
 @auth_bp.route("/register", methods=["POST"])
 def register():
-    """Rota para cadastro de novos usuários."""
+    """
+    Rota para cadastro de novos usuários (US-01).
+    Garante perfil 'student' obrigatório, valida formato de e-mail e complexidade de senha.
+    """
     data = request.get_json() or {}
-    username = data.get("username", "").strip()
-    email = data.get("email", "").strip().lower()
-    password = data.get("password", "")
-    role = data.get("role", "student")
+    username = str(data.get("username", "")).strip()
+    email = str(data.get("email", "")).strip().lower()
+    password = str(data.get("password", ""))
 
+    # Cenário 6: Submissão com campos obrigatórios vazios
     if not username or not email or not password:
-        return jsonify({"error": "Preencha username, email e senha."}), 400
+        return jsonify({"error": "Campo obrigatório. Preencha nome de usuário, e-mail e senha."}), 400
 
-    if User.query.filter((User.username == username) | (User.email == email)).first():
-        return jsonify({"error": "Nome de usuário ou e-mail já cadastrado."}), 409
+    # Cenário 3: Validação de formato de e-mail inválido
+    if not EMAIL_REGEX.match(email):
+        return jsonify({"error": "Informe um e-mail válido."}), 400
 
-    user = User(username=username, email=email, role=role)
+    # Cenário 4: Senha fora dos padrões de complexidade (mínimo 8 caracteres, ao menos uma letra e um número)
+    if len(password) < 8 or not re.search(r"[A-Za-z]", password) or not re.search(r"\d", password):
+        return jsonify({
+            "error": "A senha deve conter no mínimo 8 caracteres, incluindo pelo menos uma letra e um número."
+        }), 400
+
+    # Cenário 2: Tentativa de cadastro com e-mail já existente
+    if User.query.filter_by(email=email).first():
+        return jsonify({"error": "Este e-mail já está cadastrado."}), 409
+
+    if User.query.filter_by(username=username).first():
+        return jsonify({"error": "Este nome de usuário já está cadastrado."}), 409
+
+    # Cenário 1 e 7: Criação com perfil forçado para 'student' (imune a autoatribuição de perfil privilegiado)
+    user = User(username=username, email=email, role="student")
     user.set_password(password)
     db.session.add(user)
     db.session.commit()
 
     return jsonify({
-        "message": "Usuário registrado com sucesso!",
+        "message": "Cadastro realizado com sucesso",
         "user": user.to_dict()
     }), 201
 
@@ -157,7 +178,6 @@ def delete_user(user_id):
     Realiza soft delete (is_active = False) por padrão, ou hard delete se ?hard=true for passado.
     Valida token de autenticação caso o header Authorization seja fornecido.
     """
-    # Verificação opcional de autorização por token JWT
     auth_header = request.headers.get("Authorization")
     if auth_header and auth_header.startswith("Bearer "):
         token = auth_header.split(" ", 1)[1]
@@ -165,7 +185,6 @@ def delete_user(user_id):
         if not payload or payload.get("type") != "access":
             return jsonify({"error": "Token de autenticação inválido ou expirado."}), 401
         
-        # Apenas o próprio usuário ou administradores podem excluir a conta
         token_user_id = payload.get("sub")
         role = payload.get("role")
         if token_user_id != user_id and role != "admin":
