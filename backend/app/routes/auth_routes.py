@@ -292,6 +292,61 @@ def change_password():
     }), 200
 
 # ==========================================
+# ENDPOINT DA US-05: LISTAGEM DE USUÁRIOS (ADMIN)
+# ==========================================
+
+@auth_bp.route("/users", methods=["GET"])
+def list_users():
+    """
+    US-05: Listagem de usuários paginada (10 por página), com busca e filtro por role.
+    Acesso restrito para usuários com perfil 'admin'.
+    """
+    user, error_response = get_authenticated_user()
+    if error_response:
+        return error_response
+
+    # Cenário 6: Bloqueio para perfil Estudante
+    if user.role != "admin":
+        return jsonify({"error": "Acesso restrito para administradores."}), 403
+
+    page = request.args.get("page", 1, type=int)
+    per_page = request.args.get("per_page", 10, type=int)
+    search = request.args.get("search", "", type=str).strip()
+    role = request.args.get("role", "", type=str).strip().lower()
+
+    if page < 1:
+        page = 1
+    if per_page < 1:
+        per_page = 10
+
+    query = User.query
+
+    # Cenário 3: Filtrar por termo de busca em username ou email
+    if search:
+        search_pattern = f"%{search}%"
+        query = query.filter((User.username.ilike(search_pattern)) | (User.email.ilike(search_pattern)))
+
+    # Cenário 4: Filtrar por perfil de acesso
+    if role and role != "all":
+        query = query.filter(User.role == role)
+
+    query = query.order_by(User.created_at.desc(), User.id.desc())
+    pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+
+    # Cenário 8: Proteção de dados sensíveis (sem senha_hash nem segredo 2FA)
+    users_data = [u.to_dict() for u in pagination.items]
+
+    return jsonify({
+        "users": users_data,
+        "total": pagination.total,
+        "page": pagination.page,
+        "per_page": pagination.per_page,
+        "pages": pagination.pages,
+        "has_prev": pagination.has_prev,
+        "has_next": pagination.has_next
+    }), 200
+
+# ==========================================
 # ENDPOINTS DE EXCLUSÃO DE CONTA
 # ==========================================
 
