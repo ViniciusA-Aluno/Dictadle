@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { authService } from '../services/api';
+import EditUserModal from '../components/EditUserModal';
+import DeleteUserModal from '../components/DeleteUserModal';
 import {
   ShieldCheck,
   Settings,
@@ -23,6 +25,9 @@ import {
   Activity,
   UserCheck,
   UserX,
+  Pencil,
+  Trash2,
+  AlertCircle,
 } from 'lucide-react';
 
 export default function AdminUsersPage({ currentUser, onNavigateToSettings, onLogout }) {
@@ -30,6 +35,7 @@ export default function AdminUsersPage({ currentUser, onNavigateToSettings, onLo
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
+  const [toastMessage, setToastMessage] = useState(null);
 
   // Filtros e Paginação
   const [searchTerm, setSearchTerm] = useState('');
@@ -41,8 +47,10 @@ export default function AdminUsersPage({ currentUser, onNavigateToSettings, onLo
   const [totalPages, setTotalPages] = useState(1);
   const [totalUsers, setTotalUsers] = useState(0);
 
-  // Modal de Detalhes do Usuário
-  const [selectedUser, setSelectedUser] = useState(null);
+  // Modais de Ação
+  const [selectedUser, setSelectedUser] = useState(null); // Modal de Detalhes
+  const [userToEdit, setUserToEdit] = useState(null); // Modal de Edição
+  const [userToDelete, setUserToDelete] = useState(null); // Modal de Exclusão
 
   // Debounce para busca textual suave
   useEffect(() => {
@@ -91,6 +99,20 @@ export default function AdminUsersPage({ currentUser, onNavigateToSettings, onLo
   useEffect(() => {
     fetchUsers();
   }, [fetchUsers]);
+
+  // Manipulador de sucesso após edição
+  const handleEditSuccess = (updatedUser, msg) => {
+    setToastMessage({ type: 'success', text: msg || 'Usuário atualizado com sucesso!' });
+    fetchUsers(true);
+    setTimeout(() => setToastMessage(null), 5000);
+  };
+
+  // Manipulador de sucesso após exclusão
+  const handleDeleteSuccess = (userId, msg) => {
+    setToastMessage({ type: 'success', text: msg || 'Ação de exclusão concluída com sucesso!' });
+    fetchUsers(true);
+    setTimeout(() => setToastMessage(null), 5000);
+  };
 
   // Bloqueio client-side caso um estudante chegue a esta tela
   if (currentUser?.role !== 'admin') {
@@ -159,6 +181,32 @@ export default function AdminUsersPage({ currentUser, onNavigateToSettings, onLo
 
       {/* Conteúdo Principal */}
       <main className="max-w-7xl mx-auto w-full px-4 sm:px-6 py-8 space-y-6 flex-1">
+        {/* Toast Notificação de Feedback */}
+        {toastMessage && (
+          <div
+            className={`p-4 rounded-2xl border text-xs flex items-center justify-between shadow-sm animate-in fade-in slide-in-from-top-2 duration-200 ${
+              toastMessage.type === 'success'
+                ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                : 'bg-rose-50 border-rose-200 text-rose-800'
+            }`}
+          >
+            <div className="flex items-center gap-2.5">
+              {toastMessage.type === 'success' ? (
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+              ) : (
+                <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />
+              )}
+              <span className="font-medium">{toastMessage.text}</span>
+            </div>
+            <button
+              onClick={() => setToastMessage(null)}
+              className="text-slate-400 hover:text-slate-600 p-1"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
+
         {/* Título e Ações Rápidas */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
@@ -167,7 +215,7 @@ export default function AdminUsersPage({ currentUser, onNavigateToSettings, onLo
               <span>Gestão de Usuários</span>
             </h2>
             <p className="text-xs text-slate-500 mt-1">
-              Visualize e audite todos os usuários cadastrados, papéis de acesso e status de atividade no Dictadle.
+              Visualize, edite e gerencie o ciclo de vida dos usuários cadastrados na plataforma.
             </p>
           </div>
 
@@ -300,7 +348,7 @@ export default function AdminUsersPage({ currentUser, onNavigateToSettings, onLo
           </div>
         </div>
 
-        {/* Mensagem de Erro */}
+        {/* Mensagem de Erro Geral */}
         {error && (
           <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl text-xs text-rose-700 flex items-center justify-between">
             <span>{error}</span>
@@ -453,16 +501,44 @@ export default function AdminUsersPage({ currentUser, onNavigateToSettings, onLo
                             : '—'}
                         </td>
 
-                        {/* Ações: Visualização */}
+                        {/* Ações: Visualização, Edição e Exclusão */}
                         <td className="py-3.5 px-6 text-center">
-                          <button
-                            onClick={() => setSelectedUser(u)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 bg-slate-100 hover:bg-indigo-50 text-slate-700 hover:text-indigo-700 rounded-lg text-xs font-semibold transition"
-                            title="Visualizar detalhes do usuário"
-                          >
-                            <Eye className="w-3.5 h-3.5" />
-                            <span>Detalhes</span>
-                          </button>
+                          <div className="flex items-center justify-center gap-1.5">
+                            {/* Ver Detalhes */}
+                            <button
+                              onClick={() => setSelectedUser(u)}
+                              className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg transition"
+                              title="Visualizar detalhes do usuário"
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                            </button>
+
+                            {/* Editar Usuário */}
+                            <button
+                              onClick={() => setUserToEdit(u)}
+                              className="p-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg transition"
+                              title="Editar dados do usuário"
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                            </button>
+
+                            {/* Excluir Usuário */}
+                            <button
+                              onClick={() => setUserToDelete(u)}
+                              className={`p-1.5 rounded-lg transition ${
+                                isSelf
+                                  ? 'bg-slate-100 text-slate-300 cursor-not-allowed'
+                                  : 'bg-rose-50 hover:bg-rose-100 text-rose-600'
+                              }`}
+                              title={
+                                isSelf
+                                  ? 'Você não pode excluir sua própria conta pela lista'
+                                  : 'Excluir ou desativar usuário'
+                              }
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -524,7 +600,7 @@ export default function AdminUsersPage({ currentUser, onNavigateToSettings, onLo
                   <h3 className="text-base font-extrabold text-slate-800 leading-tight">
                     {selectedUser.username}
                   </h3>
-                  <p className="text-xs text-slate-400">Identificador do Sistema #{selectedUser.id}</p>
+                  <p className="text-xs text-slate-400">Identificador #{selectedUser.id}</p>
                 </div>
               </div>
               <button
@@ -607,7 +683,19 @@ export default function AdminUsersPage({ currentUser, onNavigateToSettings, onLo
             </div>
 
             {/* Rodapé do Modal */}
-            <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-end">
+            <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+              <button
+                onClick={() => {
+                  const target = selectedUser;
+                  setSelectedUser(null);
+                  setUserToEdit(target);
+                }}
+                className="px-3.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded-xl text-xs transition flex items-center gap-1.5"
+              >
+                <Pencil className="w-3.5 h-3.5" />
+                <span>Editar este Usuário</span>
+              </button>
+
               <button
                 onClick={() => setSelectedUser(null)}
                 className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl text-xs transition"
@@ -618,6 +706,24 @@ export default function AdminUsersPage({ currentUser, onNavigateToSettings, onLo
           </div>
         </div>
       )}
+
+      {/* Modal de Edição de Usuário */}
+      <EditUserModal
+        user={userToEdit}
+        isOpen={Boolean(userToEdit)}
+        onClose={() => setUserToEdit(null)}
+        onSuccess={handleEditSuccess}
+        currentUser={currentUser}
+      />
+
+      {/* Modal de Exclusão / Desativação de Usuário */}
+      <DeleteUserModal
+        user={userToDelete}
+        isOpen={Boolean(userToDelete)}
+        onClose={() => setUserToDelete(null)}
+        onSuccess={handleDeleteSuccess}
+        currentUser={currentUser}
+      />
     </div>
   );
 }
