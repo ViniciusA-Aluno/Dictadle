@@ -30,6 +30,7 @@ export const authService = {
     api.put('/auth/change-password', { current_password, new_password }),
   deleteAccount: (userId, hard = false) =>
     api.delete(`/auth/users/${userId}${hard ? '?hard=true' : ''}`),
+  getUsers: (params) => api.get('/auth/users', { params }),
 };
 
 export default api;
