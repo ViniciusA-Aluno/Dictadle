@@ -1,1 +1,18 @@
-.vscode
+# IDE
+.vscode/
+
+# Ambientes virtuais e dependencias
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+node_modules/
+
+# Banco de dados e instancias locais
+instance/
+backend/instance/
+*.db
+*.sqlite3
+
+# Variaveis de ambiente
+.env
