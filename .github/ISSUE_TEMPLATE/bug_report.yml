@@ -1,0 +1,129 @@
+name: Bug Report
+description: Registrar um bug ou problema no sistema
+title: "[BUG]: "
+labels: ["bug"]
+body:
+  - type: dropdown
+    id: release
+    attributes:
+      label: Release
+      description: Em qual release o bug foi encontrado?
+      options:
+        - R1
+        - R2
+        - R3
+        - R4
+    validations:
+      required: true
+  - type: input
+    id: sprint
+    attributes:
+      label: Sprint
+      description: Sprint em que o problema foi identificado (ex.: Sprint 1)
+      placeholder: "ex.: Sprint 1"
+  - type: dropdown
+    id: severidade
+    attributes:
+      label: Severidade
+      options:
+        - Crítica
+        - Alta
+        - Média
+        - Baixa
+    validations:
+      required: true
+  - type: dropdown
+    id: prioridade
+    attributes:
+      label: Prioridade
+      options:
+        - Alta
+        - Média
+        - Baixa
+    validations:
+      required: true
+  - type: input
+    id: responsavel
+    attributes:
+      label: Responsável
+      placeholder: "@usuario-github"
+  - type: input
+    id: reportado_por
+    attributes:
+      label: Reportado por
+      placeholder: "@usuario-github (QA)"
+  - type: input
+    id: us_relacionada
+    attributes:
+      label: US Relacionada
+      placeholder: "#número da issue, se houver"
+  - type: textarea
+    id: descricao
+    attributes:
+      label: Descrição
+      description: O que está acontecendo de errado, em uma ou duas frases.
+      placeholder: "<O que está acontecendo de errado, em uma ou duas frases>"
+    validations:
+      required: true
+  - type: textarea
+    id: ambiente
+    attributes:
+      label: Ambiente
+      description: Detalhes do ambiente de execução.
+      value: |
+        - **Ambiente:** local | homologação | produção
+        - **Navegador / versão:** ex.: Chrome 130
+        - **Sistema operacional:** ex.: Windows 11
+        - **Versão / commit / branch:** ex.: main, a1b2c3d
+    validations:
+      required: true
+  - type: textarea
+    id: passos_para_reproduzir
+    attributes:
+      label: Passos para Reproduzir
+      description: Passos detalhados para reproduzir o problema.
+      value: |
+        1. 
+        2. 
+        3. 
+    validations:
+      required: true
+  - type: textarea
+    id: resultado_esperado
+    attributes:
+      label: Resultado Esperado
+      description: O que deveria acontecer.
+      placeholder: "<O que deveria acontecer>"
+    validations:
+      required: true
+  - type: textarea
+    id: resultado_obtido
+    attributes:
+      label: Resultado Obtido
+      description: O que aconteceu de fato.
+      placeholder: "<O que aconteceu de fato>"
+    validations:
+      required: true
+  - type: textarea
+    id: evidencias
+    attributes:
+      label: Evidências
+      description: Capturas de tela, vídeo, logs ou mensagens de erro.
+      placeholder: "<Capturas de tela, vídeo, logs ou mensagens de erro>"
+  - type: textarea
+    id: criterio_de_correcao
+    attributes:
+      label: Critério de Correção (Gherkin, opcional)
+      value: |
+        Dado que <contexto>
+        Quando <ação>
+        Então <comportamento correto>
+  - type: checkboxes
+    id: checklist_encerramento
+    attributes:
+      label: Checklist de Encerramento
+      options:
+        - label: Causa identificada e registrada nos comentários
+        - label: Correção feita via Pull Request que referencia esta issue
+        - label: Teste de regressão criado ou atualizado
+        - label: Correção verificada pelo QA
