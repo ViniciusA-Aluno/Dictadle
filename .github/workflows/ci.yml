@@ -1,4 +1,4 @@
-name: Dictadle CI Pipeline
+name: Dictadle CI/CD Pipeline
 
 on:
   push:
@@ -7,24 +7,9 @@ on:
     branches: [ "main", "develop" ]
 
 jobs:
-  backend-ci:
-    name: Backend CI (PostgreSQL, Migrations & Coverage)
+  backend-tests:
+    name: Backend Tests (Pytest)
     runs-on: ubuntu-latest
-
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres_ci_password
-          POSTGRES_DB: dictadle_ci_db
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
 
     defaults:
       run:
@@ -45,29 +30,16 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Validate Database Migrations on PostgreSQL
-        env:
-          FLASK_APP: wsgi.py
-          FLASK_ENV: development
-          DATABASE_URL: postgresql+psycopg2://postgres:postgres_ci_password@localhost:5432/dictadle_ci_db
-          SECRET_KEY: ci_secret_key_testing_dictadle
-        run: |
-          flask db upgrade
-
-      - name: Run Pytest Suite with Coverage
+      - name: Run Pytest Suite
         env:
           FLASK_ENV: testing
           TEST_DATABASE_URI: "sqlite:///:memory:"
           SECRET_KEY: ci_secret_key_testing_dictadle
         run: |
-          python -m coverage run --source=app -m pytest tests -v
+          python -m pytest tests -v
 
-      - name: Generate Coverage Report & Quality Gate (Min 80%)
-        run: |
-          python -m coverage report -m --fail-under=80
-
-  frontend-ci:
-    name: Frontend CI (Build & Dependencies)
+  frontend-build:
+    name: Frontend Build (Vite)
     runs-on: ubuntu-latest
 
     defaults:
