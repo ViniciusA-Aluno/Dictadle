@@ -37,4 +37,9 @@ export const authService = {
   updateUser: (userId, data) => api.put(`/users/${userId}`, data),
 };
 
+export const challengeService = {
+  getPlayback: (challengeId) => api.get(`/challenges/${challengeId}/playback`),
+  getDailyPlayback: () => api.get('/challenges/daily/playback'),
+};
+
 export default api;
