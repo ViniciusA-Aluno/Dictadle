@@ -474,17 +474,12 @@ def delete_user(user_id):
     Valida token de autenticação caso o header Authorization seja fornecido.
     Protege contra a exclusão do último administrador ativo.
     """
-    auth_header = request.headers.get("Authorization")
-    if auth_header and auth_header.startswith("Bearer "):
-        token = auth_header.split(" ", 1)[1]
-        payload = TokenService.decode_token(token)
-        if not payload or payload.get("type") != "access":
-            return jsonify({"error": "Token de autenticação inválido ou expirado."}), 401
+    auth_user, auth_error = get_authenticated_user()
+    if auth_error:
+        return auth_error
 
-        token_user_id = payload.get("sub")
-        role = payload.get("role")
-        if token_user_id != user_id and role != "admin":
-            return jsonify({"error": "Acesso não autorizado para excluir este usuário."}), 403
+    if auth_user.id != user_id and auth_user.role != "admin":
+        return jsonify({"error": "Acesso não autorizado para excluir este usuário."}), 403
 
     user = db.session.get(User, user_id) if hasattr(db.session, "get") else User.query.get(user_id)
     if not user:
@@ -515,20 +510,11 @@ def delete_user(user_id):
 @auth_bp.route("/account", methods=["DELETE"])
 def delete_account():
     """
-    Rota para o usuário logado excluir a própria conta via Bearer token ou identificação no payload.
+    Rota para o usuário logado excluir a própria conta via Bearer token (SCRUM-152).
+    Exige autenticação JWT obrigatória.
     """
-    auth_header = request.headers.get("Authorization")
-    data = request.get_json(silent=True) or {}
-    user_id = data.get("user_id")
+    auth_user, auth_error = get_authenticated_user()
+    if auth_error:
+        return auth_error
 
-    if auth_header and auth_header.startswith("Bearer "):
-        token = auth_header.split(" ", 1)[1]
-        payload = TokenService.decode_token(token)
-        if not payload or payload.get("type") != "access":
-            return jsonify({"error": "Token de autenticação inválido ou expirado."}), 401
-        user_id = payload.get("sub")
-
-    if not user_id:
-        return jsonify({"error": "Identificação do usuário é obrigatória."}), 400
-
-    return delete_user(user_id)
+    return delete_user(auth_user.id)
