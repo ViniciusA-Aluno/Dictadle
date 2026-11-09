@@ -112,3 +112,85 @@ def sanitize_pagination_params(
         clean_per_page = default_per_page
 
     return clean_page, clean_per_page
+
+def validate_challenge_payload(data: Any) -> Tuple[bool, Optional[str], Optional[dict]]:
+    """
+    Valida as regras de negócio para cadastro de Desafio de Transcrição (SCRUM-129 / US-87):
+    - Título obrigatório (máx 150 caracteres).
+    - URL do vídeo obrigatória e formato válido do YouTube.
+    - Intervalo de tempo: start_time >= 0, end_time > start_time e duração entre 5s e 30s.
+    - Nível de dificuldade: 'easy', 'medium' ou 'hard'.
+    - Transcrição oficial (gabarito) obrigatória.
+    """
+    from app.services.video_service import VideoService
+
+    if not isinstance(data, dict):
+        return False, "Corpo da requisição deve ser um objeto JSON.", None
+
+    title = data.get("title")
+    if not title or not isinstance(title, str) or not title.strip():
+        return False, "O título do desafio é obrigatório.", None
+    clean_title = title.strip()
+    if len(clean_title) > 150:
+        return False, "O título deve ter no máximo 150 caracteres.", None
+
+    video_url = data.get("video_url")
+    if not video_url or not isinstance(video_url, str) or not video_url.strip():
+        return False, "A URL do vídeo é obrigatória.", None
+    clean_video_url = video_url.strip()
+
+    is_valid_url, video_id, url_err = VideoService.validate_video_url(clean_video_url)
+    if not is_valid_url:
+        return False, url_err or "URL do YouTube inválida ou ID do vídeo não encontrado.", None
+
+    # Suporta start_time_seconds ou start_time
+    raw_start = data.get("start_time_seconds", data.get("start_time"))
+    raw_end = data.get("end_time_seconds", data.get("end_time"))
+
+    if raw_start is None:
+        return False, "O segundo de início do trecho (start_time) é obrigatório.", None
+    if raw_end is None:
+        return False, "O segundo de fim do trecho (end_time) é obrigatório.", None
+
+    try:
+        start_time = int(raw_start)
+        end_time = int(raw_end)
+    except (ValueError, TypeError):
+        return False, "Os tempos de início e fim devem ser números inteiros em segundos.", None
+
+    if start_time < 0:
+        return False, "O tempo inicial não pode ser negativo.", None
+
+    if end_time <= start_time:
+        return False, "O tempo final deve ser maior que o tempo inicial.", None
+
+    duration = end_time - start_time
+    if duration < 5:
+        return False, "O trecho do desafio deve ter no mínimo 5 segundos.", None
+    if duration > 30:
+        return False, "O trecho do desafio deve ter no máximo 30 segundos (clipes curtos recomendados de 10 a 15 segundos).", None
+
+    difficulty = (data.get("difficulty") or "medium").strip().lower()
+    if difficulty not in ("easy", "medium", "hard"):
+        return False, "Nível de dificuldade inválido. Escolha entre: easy, medium ou hard.", None
+
+    accent = (data.get("accent") or "American").strip()
+    if len(accent) > 50:
+        return False, "O sotaque deve ter no máximo 50 caracteres.", None
+
+    # Suporta transcript_official ou transcript
+    transcript = data.get("transcript_official", data.get("transcript"))
+    if not transcript or not isinstance(transcript, str) or not transcript.strip():
+        return False, "A transcrição oficial (gabarito) é obrigatória.", None
+    clean_transcript = transcript.strip()
+
+    return True, None, {
+        "title": clean_title,
+        "video_url": clean_video_url,
+        "youtube_video_id": video_id,
+        "start_time_seconds": start_time,
+        "end_time_seconds": end_time,
+        "difficulty": difficulty,
+        "accent": accent,
+        "transcript_official": clean_transcript
+    }
