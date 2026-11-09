@@ -14,10 +14,20 @@ def auth_headers(app):
         token = TokenService.generate_access_token(user.id, user.role)
         return {"Authorization": f"Bearer {token}"}
 
-class TestCreateChallengeRoute:
-    """Testes de integração para POST /api/challenges (SCRUM-129)."""
+@pytest.fixture
+def student_headers(app):
+    with app.app_context():
+        student = User(username="student_user", email="student@dictadle.com", role="student")
+        student.set_password("Student12345")
+        db.session.add(student)
+        db.session.commit()
+        token = TokenService.generate_access_token(student.id, student.role)
+        return {"Authorization": f"Bearer {token}"}
 
-    def test_create_challenge_success(self, client, auth_headers):
+class TestCreateChallengeRoute:
+    """Testes de integração para POST /api/challenges (SCRUM-129 e SCRUM-130)."""
+
+    def test_create_challenge_success_as_admin(self, client, auth_headers):
         payload = {
             "title": "Friends - Central Perk Coffee",
             "video_url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
@@ -44,6 +54,35 @@ class TestCreateChallengeRoute:
         assert challenge.start_time_seconds == 15
         assert challenge.end_time_seconds == 27
         assert challenge.is_active is True
+
+    def test_create_challenge_forbidden_for_student_role(self, client, student_headers):
+        """
+        SCRUM-130: Proteção de rota no backend.
+        Estudantes não possuem permissão de curadoria e devem receber 403 Forbidden.
+        """
+        payload = {
+            "title": "Student Attempt",
+            "video_url": "https://youtu.be/dQw4w9WgXcQ",
+            "start_time_seconds": 10,
+            "end_time_seconds": 22,
+            "transcript_official": "Student transcript"
+        }
+        res = client.post("/api/challenges", json=payload, headers=student_headers)
+        assert res.status_code == 403
+        data = res.get_json()
+        assert "Acesso restrito para administradores" in data["error"]
+
+    def test_create_challenge_unauthenticated_fails_401(self, client):
+        """SCRUM-130: Requisição sem token JWT deve ser rejeitada com 401."""
+        payload = {
+            "title": "Unauthenticated Challenge",
+            "video_url": "https://youtu.be/dQw4w9WgXcQ",
+            "start_time_seconds": 10,
+            "end_time_seconds": 22,
+            "transcript_official": "Test"
+        }
+        res = client.post("/api/challenges", json=payload)
+        assert res.status_code == 401
 
     def test_create_challenge_missing_required_fields(self, client, auth_headers):
         payload = {
@@ -77,14 +116,3 @@ class TestCreateChallengeRoute:
         res = client.post("/api/challenges", json=payload, headers=auth_headers)
         assert res.status_code == 400
         assert "mínimo 5" in res.get_json()["error"].lower()
-
-    def test_create_challenge_unauthenticated_fails(self, client):
-        payload = {
-            "title": "Unauthenticated Challenge",
-            "video_url": "https://youtu.be/dQw4w9WgXcQ",
-            "start_time_seconds": 10,
-            "end_time_seconds": 22,
-            "transcript_official": "Test"
-        }
-        res = client.post("/api/challenges", json=payload)
-        assert res.status_code == 401

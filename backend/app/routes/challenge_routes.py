@@ -15,13 +15,17 @@ challenge_bp = Blueprint("challenges", __name__, url_prefix="/api/challenges")
 @challenge_bp.route("/", methods=["POST"])
 def create_challenge():
     """
-    Criação de novos desafios de transcrição (SCRUM-129 / US-87).
+    Criação de novos desafios de transcrição (SCRUM-129 / SCRUM-130 / US-87).
+    Acesso estritamente restrito para administradores (role == 'admin').
     Recebe os metadados do vídeo, recortes temporais e gabarito oficial,
     validando estritamente os campos e a integridade da URL do YouTube.
     """
     user, auth_error = get_authenticated_user()
     if auth_error:
         return auth_error
+
+    if user.role != "admin":
+        return jsonify({"error": "Acesso restrito para administradores."}), 403
 
     data = request.get_json(silent=True) or {}
     is_valid, error_msg, clean_data = validate_challenge_payload(data)
