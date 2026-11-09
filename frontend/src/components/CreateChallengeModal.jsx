@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { challengeService } from '../services/api';
 import {
   X,
   Film,
@@ -63,8 +64,10 @@ export default function CreateChallengeModal({
   const [customAccent, setCustomAccent] = useState('');
   const [transcriptOfficial, setTranscriptOfficial] = useState('');
 
-  // Estados locais de validação e feedback
+  // Estados locais de validação, requisição e feedback
+  const [internalLoading, setInternalLoading] = useState(false);
   const [clientError, setClientError] = useState(null);
+  const [serverError, setServerError] = useState(null);
   const [youtubeVideoId, setYoutubeVideoId] = useState(null);
 
   // Redefine o formulário ao abrir ou fechar
@@ -79,6 +82,8 @@ export default function CreateChallengeModal({
       setCustomAccent('');
       setTranscriptOfficial('');
       setClientError(null);
+      setServerError(null);
+      setInternalLoading(false);
       setYoutubeVideoId(null);
     }
   }, [isOpen]);
@@ -120,10 +125,13 @@ export default function CreateChallengeModal({
   }
 
   const effectiveAccent = accent === 'Other' ? customAccent.trim() : accent;
+  const effectiveLoading = loading || internalLoading;
+  const activeError = clientError || serverError || error;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setClientError(null);
+    setServerError(null);
 
     // Validação 1: Título
     if (!title.trim()) {
@@ -194,16 +202,44 @@ export default function CreateChallengeModal({
       transcript_official: transcriptOfficial.trim(),
     };
 
-    if (onSubmit) {
-      try {
-        await onSubmit(payload);
-      } catch (err) {
-        // Erro gerenciado pelo chamador ou repassado via prop error
+    setInternalLoading(true);
+
+    try {
+      let createdChallenge;
+      let successMessage;
+
+      if (onSubmit) {
+        const res = await onSubmit(payload);
+        createdChallenge = res?.data?.challenge || res?.challenge || payload;
+        successMessage = res?.data?.message || res?.message || 'Desafio cadastrado com sucesso!';
+      } else {
+        const response = await challengeService.createChallenge(payload);
+        createdChallenge = response.data?.challenge || payload;
+        successMessage = response.data?.message || 'Desafio cadastrado com sucesso!';
       }
-    } else if (onSuccess) {
-      // Fallback para mock/testes locais se onSubmit não foi passado
-      onSuccess(payload, 'Desafio criado com sucesso!');
+
+      if (onSuccess) {
+        onSuccess(createdChallenge, successMessage);
+      }
       onClose();
+    } catch (err) {
+      let errMsg = 'Erro ao cadastrar desafio. Tente novamente.';
+      if (err.response) {
+        if (err.response.status === 403) {
+          errMsg = 'Acesso restrito: apenas administradores podem criar desafios.';
+        } else if (err.response.status === 401) {
+          errMsg = 'Sua sessão expirou ou é inválida. Faça login novamente como administrador.';
+        } else if (err.response.data?.error) {
+          errMsg = err.response.data.error;
+        } else if (err.response.data?.message) {
+          errMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errMsg = err.message;
+      }
+      setServerError(errMsg);
+    } finally {
+      setInternalLoading(false);
     }
   };
 
@@ -233,7 +269,7 @@ export default function CreateChallengeModal({
           <button
             type="button"
             onClick={onClose}
-            disabled={loading}
+            disabled={effectiveLoading}
             className="p-1.5 text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-200/60 transition disabled:opacity-50"
             title="Fechar formulário"
           >
@@ -244,11 +280,11 @@ export default function CreateChallengeModal({
         {/* Corpo do Formulário com Rolagem Suave */}
         <form onSubmit={handleSubmit} className="p-5 sm:p-6 overflow-y-auto space-y-5 text-xs flex-1">
           {/* Alertas de Erro (Client-Side ou Server-Side) */}
-          {(clientError || error) && (
+          {activeError && (
             <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-2xl flex items-start gap-2.5 text-rose-800 animate-in fade-in duration-150">
               <AlertCircle className="w-4 h-4 mt-0.5 shrink-0 text-rose-600" />
               <div className="flex-1 font-medium leading-relaxed">
-                {clientError || error}
+                {activeError}
               </div>
             </div>
           )}
@@ -280,7 +316,7 @@ export default function CreateChallengeModal({
                 maxLength={150}
                 placeholder="Ex: Friends - Joey Doesn't Share Food (Season 10)"
                 className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-slate-800 placeholder:text-slate-400"
-                disabled={loading}
+                disabled={effectiveLoading}
               />
             </div>
             <p className="text-[11px] text-slate-400 mt-1">
@@ -305,7 +341,7 @@ export default function CreateChallengeModal({
                 onChange={(e) => setVideoUrl(e.target.value)}
                 placeholder="https://www.youtube.com/watch?v=dQw4w9WgXcQ"
                 className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-slate-800 placeholder:text-slate-400"
-                disabled={loading}
+                disabled={effectiveLoading}
               />
             </div>
 
@@ -381,7 +417,7 @@ export default function CreateChallengeModal({
                     onChange={(e) => setStartTime(e.target.value)}
                     placeholder="0"
                     className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-slate-800"
-                    disabled={loading}
+                    disabled={effectiveLoading}
                   />
                   <span className="absolute right-3 top-2.5 text-[11px] font-medium text-slate-400">
                     seg
@@ -406,7 +442,7 @@ export default function CreateChallengeModal({
                     onChange={(e) => setEndTime(e.target.value)}
                     placeholder="15"
                     className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-slate-800"
-                    disabled={loading}
+                    disabled={effectiveLoading}
                   />
                   <span className="absolute right-3 top-2.5 text-[11px] font-medium text-slate-400">
                     seg
@@ -455,7 +491,7 @@ export default function CreateChallengeModal({
                   value={difficulty}
                   onChange={(e) => setDifficulty(e.target.value)}
                   className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-slate-800 appearance-none font-medium cursor-pointer"
-                  disabled={loading}
+                  disabled={effectiveLoading}
                 >
                   <option value="easy">Fácil (Fala clara e vocabulário simples)</option>
                   <option value="medium">Médio (Velocidade natural e cotidiano)</option>
@@ -479,7 +515,7 @@ export default function CreateChallengeModal({
                   value={accent}
                   onChange={(e) => setAccent(e.target.value)}
                   className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-slate-800 appearance-none font-medium cursor-pointer"
-                  disabled={loading}
+                  disabled={effectiveLoading}
                 >
                   <option value="American">Americano (EUA)</option>
                   <option value="British">Britânico (Reino Unido)</option>
@@ -498,7 +534,7 @@ export default function CreateChallengeModal({
                   placeholder="Ex: Escocês, Sul-Africano, etc."
                   maxLength={50}
                   className="mt-2 w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-slate-800 text-xs"
-                  disabled={loading}
+                  disabled={effectiveLoading}
                 />
               )}
             </div>
@@ -526,7 +562,7 @@ export default function CreateChallengeModal({
                 onChange={(e) => setTranscriptOfficial(e.target.value)}
                 placeholder="Ex: I'm not in danger, Skyler. I am the danger. A guy opens his door and gets shot, and you think that of me? No. I am the one who knocks!"
                 className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-slate-800 placeholder:text-slate-400 font-normal leading-relaxed resize-y"
-                disabled={loading}
+                disabled={effectiveLoading}
               />
             </div>
             <p className="text-[11px] text-slate-500 mt-1">
@@ -539,17 +575,17 @@ export default function CreateChallengeModal({
             <button
               type="button"
               onClick={onClose}
-              disabled={loading}
+              disabled={effectiveLoading}
               className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl transition disabled:opacity-50"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              disabled={loading || (durationStatus && durationStatus.type === 'error')}
+              disabled={effectiveLoading || (durationStatus && durationStatus.type === 'error')}
               className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-md shadow-indigo-100 flex items-center gap-2 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? (
+              {effectiveLoading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
                   <span>Cadastrando...</span>
