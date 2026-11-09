@@ -17,7 +17,7 @@ function AppRoutes() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Verifica se já existe um token de autenticação salvo
+  // SCRUM-153: Restauração automática de sessão ao carregar a página (F5)
   useEffect(() => {
     const token = localStorage.getItem('dictadle_token');
     if (token) {
@@ -26,9 +26,13 @@ function AppRoutes() {
         .then((res) => {
           if (res.data?.user) {
             setCurrentUser(res.data.user);
+          } else {
+            setAuthToken(null);
+            setCurrentUser(null);
           }
         })
         .catch(() => {
+          // Token inválido, expirado ou erro de autenticação: limpa a sessão local
           setAuthToken(null);
           setCurrentUser(null);
         })
@@ -42,11 +46,9 @@ function AppRoutes() {
 
   const handleLoginSuccess = (user, token) => {
     setCurrentUser(user);
-    if (user.role === 'admin') {
-      navigate('/admin');
-    } else {
-      navigate('/challenge');
-    }
+    // Redireciona para a página originalmente requisitada se houver, ou para a home do perfil
+    const destination = location.state?.from?.pathname || (user.role === 'admin' ? '/admin' : '/challenge');
+    navigate(destination, { replace: true });
   };
 
   const handleLogout = () => {
@@ -70,6 +72,7 @@ function AppRoutes() {
     }));
   };
 
+  // Exibe tela de carregamento suave enquanto verifica e reidrata a sessão do usuário
   if (isInitializing) {
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center">
