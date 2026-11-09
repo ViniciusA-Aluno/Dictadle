@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { authService } from '../services/api';
 import EditUserModal from '../components/EditUserModal';
 import DeleteUserModal from '../components/DeleteUserModal';
+import CreateChallengeModal from '../components/CreateChallengeModal';
 import {
   ShieldCheck,
   Settings,
@@ -28,6 +29,7 @@ import {
   Pencil,
   Trash2,
   AlertCircle,
+  PlusCircle,
 } from 'lucide-react';
 
 export default function AdminUsersPage({ currentUser, onNavigateToSettings, onLogout }) {
@@ -51,6 +53,7 @@ export default function AdminUsersPage({ currentUser, onNavigateToSettings, onLo
   const [selectedUser, setSelectedUser] = useState(null); // Modal de Detalhes
   const [userToEdit, setUserToEdit] = useState(null); // Modal de Edição
   const [userToDelete, setUserToDelete] = useState(null); // Modal de Exclusão
+  const [isCreateChallengeOpen, setIsCreateChallengeOpen] = useState(false); // Modal de Criação de Desafio (SCRUM-131)
 
   // Debounce para busca textual suave
   useEffect(() => {
@@ -220,6 +223,15 @@ export default function AdminUsersPage({ currentUser, onNavigateToSettings, onLo
           </div>
 
           <div className="flex items-center gap-3">
+            <button
+              onClick={() => setIsCreateChallengeOpen(true)}
+              className="flex items-center gap-1.5 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-sm hover:shadow transition"
+              title="Cadastrar novo desafio de transcrição"
+            >
+              <PlusCircle className="w-4 h-4" />
+              <span>Novo Desafio</span>
+            </button>
+
             <button
               onClick={() => fetchUsers(true)}
               disabled={loading || refreshing}
@@ -723,6 +735,16 @@ export default function AdminUsersPage({ currentUser, onNavigateToSettings, onLo
         onClose={() => setUserToDelete(null)}
         onSuccess={handleDeleteSuccess}
         currentUser={currentUser}
+      />
+
+      {/* Modal de Criação de Desafio (SCRUM-131) */}
+      <CreateChallengeModal
+        isOpen={isCreateChallengeOpen}
+        onClose={() => setIsCreateChallengeOpen(false)}
+        onSuccess={(createdChallenge, msg) => {
+          setToastMessage({ type: 'success', text: msg || 'Desafio cadastrado com sucesso!' });
+          setTimeout(() => setToastMessage(null), 5000);
+        }}
       />
     </div>
   );
