@@ -72,6 +72,7 @@ export const authService = {
 
 export const challengeService = {
   createChallenge: (challengeData) => api.post('/challenges', challengeData),
+  getChallenges: (params) => api.get('/challenges', { params }),
   getPlayback: (challengeId) => api.get(`/challenges/${challengeId}/playback`),
   getDailyPlayback: () => api.get('/challenges/daily/playback'),
 };

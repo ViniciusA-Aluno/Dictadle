@@ -7,9 +7,72 @@ from flask import Blueprint, request, jsonify
 from app.extensions import db
 from app.models.challenge import Challenge
 from app.routes.auth_routes import get_authenticated_user
-from app.services.validators import validate_challenge_payload
+from app.services.validators import validate_challenge_payload, sanitize_pagination_params
 
 challenge_bp = Blueprint("challenges", __name__, url_prefix="/api/challenges")
+
+@challenge_bp.route("", methods=["GET"])
+@challenge_bp.route("/", methods=["GET"])
+def list_challenges():
+    """
+    Listagem paginada de desafios com filtros e busca (SCRUM-137 / US-90).
+    Acesso restrito para administradores (role == 'admin').
+    Suporta paginação (page, per_page), busca textual por título (search)
+    e filtros por dificuldade (difficulty), sotaque (accent) e status (status/is_active).
+    """
+    user, auth_error = get_authenticated_user()
+    if auth_error:
+        return auth_error
+
+    if user.role != "admin":
+        return jsonify({"error": "Acesso restrito para administradores."}), 403
+
+    page_raw = request.args.get("page", 1)
+    per_page_raw = request.args.get("per_page", 10)
+    page, per_page = sanitize_pagination_params(page_raw, per_page_raw, default_per_page=10)
+
+    search = request.args.get("search", "", type=str).strip()
+    difficulty = request.args.get("difficulty", "", type=str).strip().lower()
+    accent = request.args.get("accent", "", type=str).strip()
+    status = request.args.get("status", "", type=str).strip().lower()
+    is_active_raw = request.args.get("is_active", None)
+
+    query = Challenge.query
+
+    # Busca textual no título do desafio
+    if search:
+        search_pattern = f"%{search}%"
+        query = query.filter(Challenge.title.ilike(search_pattern))
+
+    # Filtro por dificuldade
+    if difficulty and difficulty != "all":
+        query = query.filter(Challenge.difficulty == difficulty)
+
+    # Filtro por sotaque
+    if accent and accent.lower() != "all":
+        accent_pattern = f"%{accent}%"
+        query = query.filter(Challenge.accent.ilike(accent_pattern))
+
+    # Filtro por status (ativo / inativo)
+    if status == "active" or is_active_raw in ("true", "1", "True"):
+        query = query.filter(Challenge.is_active.is_(True))
+    elif status in ("inactive", "disabled") or is_active_raw in ("false", "0", "False"):
+        query = query.filter(Challenge.is_active.is_(False))
+
+    query = query.order_by(Challenge.created_at.desc(), Challenge.id.desc())
+    pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+
+    challenges_data = [c.to_admin_dict() for c in pagination.items]
+
+    return jsonify({
+        "challenges": challenges_data,
+        "total": pagination.total,
+        "page": pagination.page,
+        "per_page": pagination.per_page,
+        "pages": pagination.pages,
+        "has_prev": pagination.has_prev,
+        "has_next": pagination.has_next
+    }), 200
 
 @challenge_bp.route("", methods=["POST"])
 @challenge_bp.route("/", methods=["POST"])
