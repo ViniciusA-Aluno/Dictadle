@@ -42,3 +42,28 @@ Conforme os requisitos da disciplina, a aplicação opera com **PostgreSQL Nativ
    ```bash
    flask db upgrade
    ```
+
+---
+
+## Driver Arquitetural `DA-DIS-DEV-002` — Disponibilidade Contínua Durante Atualizações (`SCRUM-22`)
+
+Para atender ao requisito de **Disponibilidade Contínua (Zero-Downtime Deployment)** na Release 2 (SLA de uptime $\ge 99,9\%$ e $0\%$ de erros `502`/`503` durante atualizações em horário de pico), a arquitetura implementa:
+
+1. **Readiness & Liveness Gate (`/api/health` e `/api/health/ready`):**
+   * Valida ativamente a prontidão da instância (`INSTANCE_READY`) e a conectividade com o banco PostgreSQL (`SELECT 1` via SQLAlchemy).
+   * Retorna `200 OK` (`ready: true`, `database: "connected"`) apenas quando a instância está apta a receber tráfego de estudantes, ou `503 Service Unavailable` durante o aquecimento (`warming_up`), impedindo a migração prematura de tráfego pelo Load Balancer.
+   * Injeta cabeçalhos de observabilidade `X-Deployment-Slot` (`blue` / `green`) e `X-App-Version` em todas as respostas HTTP.
+
+2. **Orquestração Blue/Green (`BlueGreenLoadBalancer`):**
+   * Mantém o tráfego dos usuários ativos na instância `blue` enquanto a nova versão (`green`) é provisionada em paralelo.
+   * Realiza a comutação atômica de tráfego somente após aprovação integral no Readiness Gate (`/api/health/ready`), preservando sessões JWT stateless sem derrubar conexões.
+
+3. **Verificação Automatizada (Pytest + k6):**
+   * **Suíte de Integração BDD (CI/CD):**
+     ```bash
+     pytest backend/tests/integration/test_availability_driver.py -v
+     ```
+   * **Teste de Carga Contínua com k6:**
+     ```bash
+     k6 run -e BASE_URL=http://localhost:5000 infra/k6/availability_driver_002.js
+     ```

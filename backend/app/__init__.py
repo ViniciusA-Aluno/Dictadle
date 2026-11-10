@@ -4,13 +4,16 @@ from flask import Flask
 from app.config import config_by_name
 from app.extensions import db, migrate, cors
 from app.routes import auth_bp, user_bp, challenge_bp
+from app.services.deployment_service import HealthCheckService
 
-def create_app(config_name=None):
+def create_app(config_name=None, config_overrides=None):
     if config_name is None:
         config_name = os.getenv("FLASK_ENV", "development")
 
     app = Flask(__name__)
     app.config.from_object(config_by_name.get(config_name, config_by_name["development"]))
+    if config_overrides:
+        app.config.update(config_overrides)
 
     # Inicialização das extensões
     db.init_app(app)
@@ -22,9 +25,17 @@ def create_app(config_name=None):
     app.register_blueprint(user_bp)
     app.register_blueprint(challenge_bp)
 
+    @app.after_request
+    def inject_deployment_headers(response):
+        response.headers["X-Deployment-Slot"] = app.config.get("DEPLOYMENT_SLOT", "blue")
+        response.headers["X-App-Version"] = app.config.get("APP_VERSION", "2.0.0")
+        return response
+
     @app.route("/api/health", methods=["GET"])
+    @app.route("/api/health/ready", methods=["GET"])
     def health_check():
-        return {"status": "ok", "message": "Dictadle API está online"}, 200
+        _, payload, status_code = HealthCheckService.evaluate_readiness()
+        return payload, status_code
 
     # Comandos CLI para gestão administrativa
     @app.cli.command("seed-admin")
