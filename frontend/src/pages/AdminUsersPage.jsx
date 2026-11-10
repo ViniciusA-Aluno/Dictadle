@@ -3,6 +3,7 @@ import { authService } from '../services/api';
 import EditUserModal from '../components/EditUserModal';
 import DeleteUserModal from '../components/DeleteUserModal';
 import CreateChallengeModal from '../components/CreateChallengeModal';
+import ChallengesManager from '../components/ChallengesManager';
 import {
   ShieldCheck,
   Settings,
@@ -30,6 +31,7 @@ import {
   Trash2,
   AlertCircle,
   PlusCircle,
+  Film,
 } from 'lucide-react';
 
 export default function AdminUsersPage({ currentUser, onNavigateToSettings, onLogout }) {
@@ -54,6 +56,10 @@ export default function AdminUsersPage({ currentUser, onNavigateToSettings, onLo
   const [userToEdit, setUserToEdit] = useState(null); // Modal de Edição
   const [userToDelete, setUserToDelete] = useState(null); // Modal de Exclusão
   const [isCreateChallengeOpen, setIsCreateChallengeOpen] = useState(false); // Modal de Criação de Desafio (SCRUM-131)
+
+  // Navegação entre Abas do Painel Administrativo (SCRUM-138)
+  const [activeTab, setActiveTab] = useState('users'); // 'users' | 'challenges'
+  const [challengeRefreshTrigger, setChallengeRefreshTrigger] = useState(0);
 
   // Debounce para busca textual suave
   useEffect(() => {
@@ -210,39 +216,73 @@ export default function AdminUsersPage({ currentUser, onNavigateToSettings, onLo
           </div>
         )}
 
-        {/* Título e Ações Rápidas */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h2 className="text-2xl font-black text-slate-800 tracking-tight flex items-center gap-2">
-              <Users className="w-6 h-6 text-indigo-600" />
-              <span>Gestão de Usuários</span>
-            </h2>
-            <p className="text-xs text-slate-500 mt-1">
-              Visualize, edite e gerencie o ciclo de vida dos usuários cadastrados na plataforma.
-            </p>
-          </div>
+        {/* Navegação por Abas: Usuários vs Desafios (SCRUM-138) */}
+        <div className="flex items-center gap-2 border-b border-slate-200 pb-0">
+          <button
+            type="button"
+            onClick={() => setActiveTab('users')}
+            className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold border-b-2 transition ${
+              activeTab === 'users'
+                ? 'border-indigo-600 text-indigo-600'
+                : 'border-transparent text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            <Users className="w-4 h-4" />
+            <span>Gestão de Usuários</span>
+            <span className="ml-1 px-2 py-0.5 rounded-full text-[10px] bg-slate-100 text-slate-600">
+              {totalUsers}
+            </span>
+          </button>
 
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setIsCreateChallengeOpen(true)}
-              className="flex items-center gap-1.5 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-sm hover:shadow transition"
-              title="Cadastrar novo desafio de transcrição"
-            >
-              <PlusCircle className="w-4 h-4" />
-              <span>Novo Desafio</span>
-            </button>
-
-            <button
-              onClick={() => fetchUsers(true)}
-              disabled={loading || refreshing}
-              className="flex items-center gap-1.5 px-3.5 py-2 bg-white border border-slate-200 hover:border-slate-300 text-slate-700 text-xs font-semibold rounded-xl shadow-sm hover:shadow transition disabled:opacity-50"
-              title="Recarregar dados"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin text-indigo-600' : 'text-slate-500'}`} />
-              <span>{refreshing ? 'Atualizando...' : 'Atualizar'}</span>
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => setActiveTab('challenges')}
+            className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold border-b-2 transition ${
+              activeTab === 'challenges'
+                ? 'border-indigo-600 text-indigo-600'
+                : 'border-transparent text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            <Film className="w-4 h-4" />
+            <span>Desafios de Transcrição</span>
+          </button>
         </div>
+
+        {activeTab === 'users' && (
+          <div className="space-y-6">
+            {/* Título e Ações Rápidas */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-2xl font-black text-slate-800 tracking-tight flex items-center gap-2">
+                  <Users className="w-6 h-6 text-indigo-600" />
+                  <span>Gestão de Usuários</span>
+                </h2>
+                <p className="text-xs text-slate-500 mt-1">
+                  Visualize, edite e gerencie o ciclo de vida dos usuários cadastrados na plataforma.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setIsCreateChallengeOpen(true)}
+                  className="flex items-center gap-1.5 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-sm hover:shadow transition"
+                  title="Cadastrar novo desafio de transcrição"
+                >
+                  <PlusCircle className="w-4 h-4" />
+                  <span>Novo Desafio</span>
+                </button>
+
+                <button
+                  onClick={() => fetchUsers(true)}
+                  disabled={loading || refreshing}
+                  className="flex items-center gap-1.5 px-3.5 py-2 bg-white border border-slate-200 hover:border-slate-300 text-slate-700 text-xs font-semibold rounded-xl shadow-sm hover:shadow transition disabled:opacity-50"
+                  title="Recarregar dados"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin text-indigo-600' : 'text-slate-500'}`} />
+                  <span>{refreshing ? 'Atualizando...' : 'Atualizar'}</span>
+                </button>
+              </div>
+            </div>
 
         {/* Cards de Resumo e Métricas */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
@@ -596,7 +636,17 @@ export default function AdminUsersPage({ currentUser, onNavigateToSettings, onLo
             </div>
           )}
         </div>
-      </main>
+        </div>
+      )}
+
+      {/* Visão de Gestão de Desafios (SCRUM-138) */}
+      {activeTab === 'challenges' && (
+        <ChallengesManager
+          onOpenCreateChallenge={() => setIsCreateChallengeOpen(true)}
+          refreshTrigger={challengeRefreshTrigger}
+        />
+      )}
+    </main>
 
       {/* Modal de Detalhes do Usuário */}
       {selectedUser && (
@@ -737,12 +787,13 @@ export default function AdminUsersPage({ currentUser, onNavigateToSettings, onLo
         currentUser={currentUser}
       />
 
-      {/* Modal de Criação de Desafio (SCRUM-131) */}
+      {/* Modal de Criação de Desafio (SCRUM-131 / SCRUM-132) */}
       <CreateChallengeModal
         isOpen={isCreateChallengeOpen}
         onClose={() => setIsCreateChallengeOpen(false)}
         onSuccess={(createdChallenge, msg) => {
           setToastMessage({ type: 'success', text: msg || 'Desafio cadastrado com sucesso!' });
+          setChallengeRefreshTrigger((prev) => prev + 1);
           setTimeout(() => setToastMessage(null), 5000);
         }}
       />
