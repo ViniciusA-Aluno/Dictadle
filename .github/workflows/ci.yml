@@ -54,6 +54,14 @@ jobs:
         run: |
           flask db upgrade
 
+      - name: Verify Availability Driver DA-DIS-DEV-002 (Blue/Green Readiness Gate)
+        env:
+          FLASK_ENV: testing
+          TEST_DATABASE_URI: "sqlite:///:memory:"
+          SECRET_KEY: ci_secret_key_testing_dictadle
+        run: |
+          pytest tests/integration/test_availability_driver.py -v
+
       - name: Run Pytest Suite with Coverage
         env:
           FLASK_ENV: testing
