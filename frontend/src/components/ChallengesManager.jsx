@@ -24,7 +24,9 @@ import {
   Loader2,
   SearchX,
   Inbox,
+  Pencil,
 } from 'lucide-react';
+import EditChallengeModal from './EditChallengeModal';
 
 /**
  * Componente ChallengesManager (SCRUM-138 / US-90)
@@ -55,6 +57,9 @@ export default function ChallengesManager({
 
   // Modal de Detalhes do Desafio
   const [selectedChallenge, setSelectedChallenge] = useState(null);
+  // Modal de Edição de Desafio (SCRUM-88)
+  const [challengeToEdit, setChallengeToEdit] = useState(null);
+  const [successToast, setSuccessToast] = useState(null);
 
   // Debounce para busca textual no título
   useEffect(() => {
@@ -344,6 +349,19 @@ export default function ChallengesManager({
         </div>
       </div>
 
+      {/* Toast de Sucesso (SCRUM-88) */}
+      {successToast && (
+        <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center justify-between text-emerald-800 text-xs animate-in fade-in duration-200">
+          <div className="flex items-center gap-2.5">
+            <CheckCircle2 className="w-5 h-5 flex-shrink-0 text-emerald-600" />
+            <span className="font-bold">{successToast}</span>
+          </div>
+          <button onClick={() => setSuccessToast(null)} className="text-emerald-600 hover:text-emerald-800 p-1">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       {/* Erro de Requisição */}
       {error && (
         <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl flex items-center gap-3 text-rose-700 text-xs">
@@ -529,15 +547,24 @@ export default function ChallengesManager({
                       )}
                     </td>
 
-                    {/* Ações */}
+                    {/* Ações (Visualização e Edição - SCRUM-88) */}
                     <td className="py-3 px-4 text-right">
-                      <button
-                        onClick={() => setSelectedChallenge(c)}
-                        className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
-                        title="Ver gabarito e detalhes"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center justify-end gap-1">
+                        <button
+                          onClick={() => setSelectedChallenge(c)}
+                          className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
+                          title="Ver gabarito e detalhes"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => setChallengeToEdit(c)}
+                          className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
+                          title="Editar desafio"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -708,18 +735,41 @@ export default function ChallengesManager({
               </div>
             </div>
 
-            {/* Rodapé */}
-            <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-end">
+            {/* Rodapé com Ação de Edição Direta */}
+            <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2">
               <button
                 onClick={() => setSelectedChallenge(null)}
                 className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl text-xs transition"
               >
                 Fechar
               </button>
+              <button
+                onClick={() => {
+                  const target = selectedChallenge;
+                  setSelectedChallenge(null);
+                  setChallengeToEdit(target);
+                }}
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs transition flex items-center gap-1.5 shadow-sm shadow-indigo-100"
+              >
+                <Pencil className="w-3.5 h-3.5" />
+                <span>Editar Desafio</span>
+              </button>
             </div>
           </div>
         </div>
       )}
+      {/* Modal de Edição de Desafio (SCRUM-88 / SCRUM-135 / SCRUM-136) */}
+      <EditChallengeModal
+        isOpen={!!challengeToEdit}
+        challenge={challengeToEdit}
+        onClose={() => setChallengeToEdit(null)}
+        onSuccess={(updated) => {
+          fetchChallenges(true);
+          setChallengeToEdit(null);
+          setSuccessToast('Desafio atualizado com sucesso!');
+          setTimeout(() => setSuccessToast(null), 4000);
+        }}
+      />
     </div>
   );
 }
