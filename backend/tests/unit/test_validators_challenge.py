@@ -131,3 +131,61 @@ class TestChallengePayloadValidation:
         is_valid, err, clean = validate_challenge_payload(payload)
         assert is_valid is False
         assert "transcrição" in err.lower()
+
+
+from app.services.validators import validate_challenge_update_payload
+
+class TestChallengeUpdatePayloadValidation:
+    """Testes unitários para a validação de atualização de desafios (SCRUM-88 / US-88)."""
+
+    def test_valid_update_duration_between_10_and_15_seconds(self):
+        payload = {
+            "start_time_seconds": 12,
+            "end_time_seconds": 24,
+            "title": "Novo Título",
+            "transcript_official": "Novo gabarito oficial válido"
+        }
+        is_valid, err, clean, code = validate_challenge_update_payload(payload)
+        assert is_valid is True
+        assert err is None
+        assert code == 200
+        assert clean["start_time_seconds"] == 12
+        assert clean["end_time_seconds"] == 24
+        assert clean["title"] == "Novo Título"
+
+    def test_update_reject_duration_less_than_10_seconds(self):
+        payload = {
+            "start_time_seconds": 20,
+            "end_time_seconds": 28  # Duração 8 segundos
+        }
+        is_valid, err, clean, code = validate_challenge_update_payload(payload)
+        assert is_valid is False
+        assert code == 422
+        assert "no mínimo 10 segundos" in err
+
+    def test_update_reject_duration_greater_than_15_seconds(self):
+        payload = {
+            "start_time_seconds": 10,
+            "end_time_seconds": 26  # Duração 16 segundos
+        }
+        is_valid, err, clean, code = validate_challenge_update_payload(payload)
+        assert is_valid is False
+        assert code == 422
+        assert "no máximo 15 segundos" in err
+
+    def test_update_reject_empty_transcript_or_greater_than_500(self):
+        # Vazio
+        is_valid, err, clean, code = validate_challenge_update_payload({"transcript_official": "   "})
+        assert is_valid is False
+        assert code == 422
+
+        # Maior que 500 caracteres
+        is_valid, err, clean, code = validate_challenge_update_payload({"transcript_official": "x" * 501})
+        assert is_valid is False
+        assert code == 422
+        assert "500 caracteres" in err
+
+    def test_update_invalid_json_type(self):
+        is_valid, err, clean, code = validate_challenge_update_payload("not a dict")
+        assert is_valid is False
+        assert code == 400
