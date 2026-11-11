@@ -21,6 +21,12 @@ class Challenge(db.Model):
     transcript_official = db.Column(db.Text, nullable=False)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    updated_at = db.Column(
+        db.DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+        nullable=True
+    )
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -32,6 +38,8 @@ class Challenge(db.Model):
             self.is_active = True
         if self.created_at is None:
             self.created_at = datetime.now(timezone.utc)
+        if self.updated_at is None:
+            self.updated_at = datetime.now(timezone.utc)
         if not self.youtube_video_id and self.video_url:
             self.youtube_video_id = VideoService.extract_youtube_video_id(self.video_url)
 
@@ -75,4 +83,5 @@ class Challenge(db.Model):
         data["transcript_official"] = self.transcript_official
         data["is_active"] = self.is_active
         data["created_at"] = self.created_at.isoformat() if self.created_at else None
+        data["updated_at"] = self.updated_at.isoformat() if self.updated_at else None
         return data

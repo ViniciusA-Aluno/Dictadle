@@ -2,7 +2,7 @@ import pytest
 from app.models.challenge import Challenge
 
 class TestChallengeModel:
-    """Testes unitários para a entidade Challenge (SCRUM-91)."""
+    """Testes unitários para a entidade Challenge (SCRUM-91 / SCRUM-88)."""
 
     def test_challenge_initialization_and_auto_extract_id(self):
         """Verifica se o youtube_video_id é extraído automaticamente da video_url caso não seja passado."""
@@ -18,6 +18,8 @@ class TestChallengeModel:
         assert challenge.accent == "American"
         assert challenge.is_active is True
         assert challenge.duration == 12
+        assert challenge.created_at is not None
+        assert challenge.updated_at is not None
 
     def test_embed_url_generation(self):
         """Validação da propriedade embed_url com parâmetros restritos de player."""
@@ -61,7 +63,7 @@ class TestChallengeModel:
         assert "transcript" not in data
 
     def test_to_admin_dict_contains_transcript(self):
-        """Visão administrativa deve incluir o gabarito oficial para conferência."""
+        """Visão administrativa deve incluir o gabarito oficial e updated_at para rastreabilidade (SCRUM-88)."""
         challenge = Challenge(
             id=1,
             title="Desafio Admin",
@@ -75,3 +77,5 @@ class TestChallengeModel:
         assert data["transcript_official"] == "Gabarito oficial do clipe"
         assert data["video_url"] == "https://youtu.be/dQw4w9WgXcQ"
         assert data["is_active"] is True
+        assert "updated_at" in data
+        assert data["updated_at"] is not None
