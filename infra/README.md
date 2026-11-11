@@ -67,3 +67,23 @@ Para atender ao requisito de **Disponibilidade Contínua (Zero-Downtime Deployme
      ```bash
      k6 run -e BASE_URL=http://localhost:5000 infra/k6/availability_driver_002.js
      ```
+
+---
+
+## Driver Arquitetural `DA-USA-I1-003` — Usabilidade: Controle de Mídia via Atalhos de Teclado (`SCRUM-20`)
+
+Para atender ao requisito de **Usabilidade** na Release 2 (controle de mídia com 0 perdas de foco/cursor durante a digitação de transcrições):
+
+1. **Listener Global de Atalhos (`useMediaKeyboardShortcuts`):**
+   * Captura combinações prioritárias:
+     * `Ctrl + Espaço`: Alterna Play / Pause instantaneamente.
+     * `Ctrl + Seta Esquerda`: Retrocede 5 segundos mantendo o piso `start_time_seconds`.
+     * `Ctrl + Seta Abaixo`: Reinicia o trecho a partir do início (Replay).
+   * Aplica `event.preventDefault()` e `event.stopPropagation()` para suprimir efeitos colaterais no navegador (como inserção de espaços ou quebras de linha).
+   * Restaura atipicamente e assegura o foco no `textarea` ativo via `requestAnimationFrame` e `setSelectionRange`, garantindo que o cursor de texto permaneça ativo e piscando na exata posição em que estava.
+
+2. **Verificação Automatizada no Frontend (CI/CD):**
+   ```bash
+   npm --prefix frontend test
+   ```
+

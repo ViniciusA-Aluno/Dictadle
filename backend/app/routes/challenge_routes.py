@@ -149,3 +149,19 @@ def get_daily_challenge_playback():
         return jsonify({"error": "Desafio não encontrado"}), 404
 
     return jsonify(challenge.to_playback_dict()), 200
+
+@challenge_bp.route("/active", methods=["GET"])
+def list_active_challenges():
+    """
+    Retorna a lista de desafios ativos para reprodução pelo estudante.
+    Em estrita conformidade com a política Anti-Cheat (nunca expõe transcript_official).
+    """
+    user, auth_error = get_authenticated_user()
+    if auth_error:
+        return auth_error
+
+    challenges = Challenge.query.filter_by(is_active=True).order_by(Challenge.id.asc()).all()
+    return jsonify({
+        "challenges": [c.to_playback_dict() for c in challenges],
+        "total": len(challenges)
+    }), 200

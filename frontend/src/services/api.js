@@ -75,6 +75,7 @@ export const challengeService = {
   getChallenges: (params) => api.get('/challenges', { params }),
   getPlayback: (challengeId) => api.get(`/challenges/${challengeId}/playback`),
   getDailyPlayback: () => api.get('/challenges/daily/playback'),
+  getActiveChallenges: () => api.get('/challenges/active'),
 };
 
 export default api;

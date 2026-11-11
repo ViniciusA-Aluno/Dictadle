@@ -20,9 +20,11 @@ export default function AnswerInputBox({
   maxLength = 500,
   placeholder = "Digite aqui a transcrição do áudio que você ouviu...",
   autoFocus = true,
+  inputRef = null,
 }) {
   const [value, setValue] = useState('');
-  const textareaRef = useRef(null);
+  const internalRef = useRef(null);
+  const textareaRef = inputRef || internalRef;
 
   // Auto-foco ao montar o componente
   useEffect(() => {

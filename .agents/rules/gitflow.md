@@ -32,9 +32,10 @@ Execute a sequência de comandos abaixo no terminal, passo a passo. Se qualquer 
    ```
 
 5. **Finalizar a feature**:
-   *Nota: utilize o parâmetro `-m` para definir a mensagem de merge e evitar que o terminal trave abrindo um editor interativo.*
+   *Nota: desative a autoedição para evitar que o terminal abra um editor interativo de mensagem de merge.*
    ```powershell
-   git flow feature finish -m "Merge feature/<task-id> into develop" <task-id>
+   $env:GIT_MERGE_AUTOEDIT = "no"
+   git flow feature finish <task-id>
    ```
 
 6. **Atualizar a develop remota**:

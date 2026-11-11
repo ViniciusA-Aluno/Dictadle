@@ -98,3 +98,6 @@ jobs:
 
       - name: Build Frontend Application
         run: npm run build
+
+      - name: Verify Usability Driver DA-USA-I1-003 & Media Playback Tests
+        run: npm test

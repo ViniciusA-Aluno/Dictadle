@@ -60,4 +60,54 @@ def create_app(config_name=None, config_overrides=None):
             db.session.commit()
             click.echo(f"Usuário '{username}' promovido a Administrador ativo.")
 
+    @app.cli.command("seed-challenges")
+    def seed_challenges_command():
+        """Popula desafios de transcrição iniciais para estudo e testes de reprodução."""
+        from app.models.challenge import Challenge
+        db.create_all()
+        if Challenge.query.count() == 0:
+            challenges = [
+                Challenge(
+                    id=1,
+                    title="Steve Jobs - Stanford Speech",
+                    video_url="https://www.youtube.com/watch?v=UF8uR6Z6KLc",
+                    youtube_video_id="UF8uR6Z6KLc",
+                    start_time_seconds=25,
+                    end_time_seconds=32,
+                    difficulty="medium",
+                    accent="American",
+                    transcript_official="I am honored to be with you today at your commencement from one of the finest universities in the world.",
+                    is_active=True
+                ),
+                Challenge(
+                    id=2,
+                    title="Brené Brown - The Power of Vulnerability (TED)",
+                    video_url="https://www.youtube.com/watch?v=iCvmsMzlF7o",
+                    youtube_video_id="iCvmsMzlF7o",
+                    start_time_seconds=16,
+                    end_time_seconds=22,
+                    difficulty="easy",
+                    accent="American",
+                    transcript_official="I want to start with this: a couple of years ago, an event planner called me because I was going to do a speaking event.",
+                    is_active=True
+                ),
+                Challenge(
+                    id=20,
+                    title="How to stay calm when you know you'll be stressed",
+                    video_url="https://www.youtube.com/watch?v=8jPQjjsBbIc",
+                    youtube_video_id="8jPQjjsBbIc",
+                    start_time_seconds=12,
+                    end_time_seconds=23,
+                    difficulty="hard",
+                    accent="American",
+                    transcript_official="A few years ago, I broke into my own house. I had just driven home, it was around midnight in the dead of winter. I had been visiting my friend Jeff, across town.",
+                    is_active=True
+                )
+            ]
+            db.session.add_all(challenges)
+            db.session.commit()
+            click.echo(f"{len(challenges)} desafios de teste semeados com sucesso.")
+        else:
+            click.echo(f"Desafios já cadastrados (total: {Challenge.query.count()}).")
+
     return app
