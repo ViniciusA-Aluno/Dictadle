@@ -21,3 +21,6 @@ htmlcov/
 
 # Variaveis de ambiente
 .env
+
+# Regras de agentes locais
+.agents/
