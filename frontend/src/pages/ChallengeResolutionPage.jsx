@@ -144,9 +144,12 @@ export default function ChallengeResolutionPage({ currentUser, onNavigateToSetti
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
       {/* Cabeçalho Superior */}
-      <header className="bg-white border-b border-slate-200 px-4 sm:px-6 py-3.5 flex items-center justify-between sticky top-0 z-10 shadow-xs">
+      <header
+        role="banner"
+        className="bg-white border-b border-slate-200 px-4 sm:px-6 py-3.5 flex items-center justify-between sticky top-0 z-10 shadow-xs"
+      >
         <div className="flex items-center gap-3">
-          <div className="bg-indigo-600 text-white p-2 rounded-xl">
+          <div className="bg-indigo-600 text-white p-2 rounded-xl" aria-hidden="true">
             <Volume2 className="w-5 h-5" />
           </div>
           <div>
@@ -164,39 +167,48 @@ export default function ChallengeResolutionPage({ currentUser, onNavigateToSetti
 
           <button
             onClick={() => navigate('/dashboard')}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition focus:outline-none focus:ring-2 focus:ring-indigo-500"
             title="Ir para o Dashboard"
+            aria-label="Ir para o Dashboard"
           >
-            <Compass className="w-3.5 h-3.5" />
+            <Compass className="w-3.5 h-3.5" aria-hidden="true" />
             <span className="hidden sm:inline">Dashboard</span>
           </button>
 
           <button
             onClick={onNavigateToSettings}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition focus:outline-none focus:ring-2 focus:ring-indigo-500"
             title="Ir para configurações"
+            aria-label="Ir para configurações"
           >
-            <Settings className="w-3.5 h-3.5" />
+            <Settings className="w-3.5 h-3.5" aria-hidden="true" />
             <span className="hidden sm:inline">Configurações</span>
           </button>
 
           <button
             onClick={onLogout}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition focus:outline-none focus:ring-2 focus:ring-rose-500"
             title="Encerrar sessão"
+            aria-label="Encerrar sessão"
           >
-            <LogOut className="w-3.5 h-3.5" />
+            <LogOut className="w-3.5 h-3.5" aria-hidden="true" />
             <span className="hidden sm:inline">Sair</span>
           </button>
         </div>
       </header>
 
       {/* Conteúdo Principal */}
-      <main className="flex-1 max-w-4xl mx-auto w-full px-4 py-6 sm:py-8 space-y-6">
+      <main
+        role="main"
+        className="flex-1 max-w-4xl mx-auto w-full px-4 py-6 sm:py-8 space-y-6"
+      >
         {/* Banner Informativo do Desafio com Metadados e Navegação */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between bg-white px-4 py-3 rounded-2xl border border-slate-200 text-xs text-slate-600 gap-3 shadow-xs">
+        <section
+          aria-label="Informações do desafio"
+          className="flex flex-col sm:flex-row sm:items-center justify-between bg-white px-4 py-3 rounded-2xl border border-slate-200 text-xs text-slate-600 gap-3 shadow-xs"
+        >
           <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-indigo-600 flex-shrink-0" />
+            <Sparkles className="w-4 h-4 text-indigo-600 flex-shrink-0" aria-hidden="true" />
             <span className="font-medium">
               {challenge ? challenge.title : 'Ouça com atenção e digite exatamente o que os falantes disserem.'}
             </span>
@@ -204,7 +216,10 @@ export default function ChallengeResolutionPage({ currentUser, onNavigateToSetti
 
           <div className="flex items-center gap-3">
             {challenge && (
-              <div className="flex items-center gap-2 font-mono text-[11px]">
+              <div
+                className="flex items-center gap-2 font-mono text-[11px]"
+                aria-label={`Dificuldade ${challenge.difficulty}, Sotaque ${challenge.accent}, Duração ${challenge.duration} segundos`}
+              >
                 <span className="px-2 py-0.5 bg-amber-50 text-amber-700 font-bold rounded-md uppercase">
                   {challenge.difficulty}
                 </span>
@@ -219,48 +234,65 @@ export default function ChallengeResolutionPage({ currentUser, onNavigateToSetti
 
             {/* Navegador entre Desafios */}
             {challengesList.length > 1 && (
-              <div className="flex items-center gap-1.5 border-l border-slate-200 pl-3">
-                <span className="text-[11px] font-semibold text-slate-500">
+              <nav
+                aria-label="Navegação entre desafios"
+                className="flex items-center gap-1.5 border-l border-slate-200 pl-3"
+              >
+                <span
+                  className="text-[11px] font-semibold text-slate-500"
+                  aria-live="polite"
+                  aria-atomic="true"
+                >
                   {currentIndex + 1} de {challengesList.length}
                 </span>
                 <button
                   type="button"
                   onClick={handlePrevChallenge}
-                  className="p-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition"
+                  className="p-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   title="Desafio anterior"
+                  aria-label="Ir para o desafio anterior"
                 >
-                  <ChevronLeft className="w-3.5 h-3.5" />
+                  <ChevronLeft className="w-3.5 h-3.5" aria-hidden="true" />
                 </button>
                 <button
                   type="button"
                   onClick={handleNextChallenge}
-                  className="flex items-center gap-1 px-2 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-[11px] transition"
+                  className="flex items-center gap-1 px-2 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-[11px] transition focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   title="Próximo desafio"
+                  aria-label="Ir para o próximo desafio"
                 >
                   <span>Próximo</span>
-                  <ChevronRight className="w-3.5 h-3.5" />
+                  <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
                 </button>
-              </div>
+              </nav>
             )}
           </div>
-        </div>
+        </section>
 
         {/* Zona 1: Player de Vídeo e Áudio Oficial (US-107 / SCRUM-149 / SCRUM-150) */}
         {isLoadingChallenge ? (
-          <div className="aspect-video w-full bg-slate-900 rounded-3xl border border-slate-800 flex flex-col items-center justify-center text-slate-400 gap-3">
-            <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+          <div
+            role="status"
+            aria-live="polite"
+            className="aspect-video w-full bg-slate-900 rounded-3xl border border-slate-800 flex flex-col items-center justify-center text-slate-400 gap-3"
+          >
+            <Loader2 className="w-8 h-8 animate-spin text-indigo-500" aria-hidden="true" />
             <p className="text-xs font-medium">Buscando clipe do desafio...</p>
           </div>
         ) : challengeError ? (
-          <div className="aspect-video w-full bg-slate-900 rounded-3xl border border-slate-800 flex flex-col items-center justify-center text-center p-6 text-slate-300">
-            <AlertCircle className="w-10 h-10 text-rose-500 mb-3" />
+          <div
+            role="alert"
+            className="aspect-video w-full bg-slate-900 rounded-3xl border border-slate-800 flex flex-col items-center justify-center text-center p-6 text-slate-300"
+          >
+            <AlertCircle className="w-10 h-10 text-rose-500 mb-3" aria-hidden="true" />
             <h3 className="text-white font-bold text-base">Falha ao carregar clipe</h3>
             <p className="text-xs text-slate-400 mt-1 max-w-sm">{challengeError}</p>
             <button
               onClick={loadChallengeData}
-              className="mt-4 flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl transition"
+              aria-label="Tentar carregar o clipe novamente"
+              className="mt-4 flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl transition focus:outline-none focus:ring-2 focus:ring-indigo-400"
             >
-              <RefreshCw className="w-3.5 h-3.5" />
+              <RefreshCw className="w-3.5 h-3.5" aria-hidden="true" />
               <span>Tentar novamente</span>
             </button>
           </div>
@@ -281,7 +313,7 @@ export default function ChallengeResolutionPage({ currentUser, onNavigateToSetti
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">
               Sua Transcrição
             </h3>
-            <span className="text-[11px] text-slate-400 hidden sm:inline">
+            <span className="text-[11px] text-slate-400 hidden sm:inline" aria-hidden="true">
               Dica: Use <kbd className="px-1 py-0.5 bg-slate-200/80 rounded font-mono text-[10px]">Ctrl+Espaço</kbd> para pausar o vídeo sem sair do texto
             </span>
           </div>
@@ -308,10 +340,11 @@ export default function ChallengeResolutionPage({ currentUser, onNavigateToSetti
                   <button
                     type="button"
                     onClick={handleNextChallenge}
-                    className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl transition shadow-sm"
+                    aria-label="Ir para o próximo desafio após ver o feedback"
+                    className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl transition shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   >
                     <span>Ir para o Próximo Desafio</span>
-                    <ChevronRight className="w-4 h-4" />
+                    <ChevronRight className="w-4 h-4" aria-hidden="true" />
                   </button>
                 </div>
               )}
