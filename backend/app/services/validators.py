@@ -194,3 +194,105 @@ def validate_challenge_payload(data: Any) -> Tuple[bool, Optional[str], Optional
         "accent": accent,
         "transcript_official": clean_transcript
     }
+
+
+def validate_challenge_update_payload(data: Any, current_challenge: Any = None) -> Tuple[bool, Optional[str], Optional[dict], int]:
+    """
+    Valida as regras pedagógicas e de integridade para atualização de Desafio (SCRUM-88 / US-88):
+    - Duração obrigatória na janela de 10 a 15 segundos (10 <= end_time - start_time <= 15).
+    - Status 422 para violações de duração ou gabarito vazio/superior a 500 caracteres.
+    - Status 400 para erros sintáticos de payload, enums ou formatação.
+    """
+    from app.services.video_service import VideoService
+
+    if not isinstance(data, dict):
+        return False, "Corpo da requisição deve ser um objeto JSON.", None, 400
+
+    clean_data = {}
+
+    # 1. Título
+    if "title" in data:
+        title = data.get("title")
+        if not title or not isinstance(title, str) or not title.strip():
+            return False, "O título do desafio é obrigatório.", None, 400
+        clean_title = title.strip()
+        if len(clean_title) > 150:
+            return False, "O título deve ter no máximo 150 caracteres.", None, 400
+        clean_data["title"] = clean_title
+
+    # 2. URL do Vídeo
+    if "video_url" in data:
+        video_url = data.get("video_url")
+        if not video_url or not isinstance(video_url, str) or not video_url.strip():
+            return False, "A URL do vídeo é obrigatória.", None, 400
+        clean_video_url = video_url.strip()
+        is_valid_url, video_id, url_err = VideoService.validate_video_url(clean_video_url)
+        if not is_valid_url:
+            return False, url_err or "URL do YouTube inválida ou ID do vídeo não encontrado.", None, 400
+        clean_data["video_url"] = clean_video_url
+        clean_data["youtube_video_id"] = video_id
+
+    # 3. Intervalo de Tempo e Duração (Janela Pedagógica estrita de 10 a 15 segundos)
+    has_start = "start_time_seconds" in data or "start_time" in data
+    has_end = "end_time_seconds" in data or "end_time" in data
+
+    if has_start or has_end or current_challenge:
+        default_start = current_challenge.start_time_seconds if current_challenge else 0
+        default_end = current_challenge.end_time_seconds if current_challenge else 0
+
+        raw_start = data.get("start_time_seconds", data.get("start_time", default_start))
+        raw_end = data.get("end_time_seconds", data.get("end_time", default_end))
+
+        try:
+            start_time = int(raw_start)
+            end_time = int(raw_end)
+        except (ValueError, TypeError):
+            return False, "Os tempos de início e fim devem ser números inteiros em segundos.", None, 400
+
+        if start_time < 0:
+            return False, "O tempo inicial não pode ser negativo.", None, 422
+
+        if end_time <= start_time:
+            return False, "O tempo final deve ser maior que o tempo inicial.", None, 422
+
+        duration = end_time - start_time
+        if duration < 10:
+            return False, "A duração do clipe deve ser de no mínimo 10 segundos", None, 422
+        if duration > 15:
+            return False, "A duração do clipe deve ser de no máximo 15 segundos", None, 422
+
+        clean_data["start_time_seconds"] = start_time
+        clean_data["end_time_seconds"] = end_time
+
+    # 4. Gabarito Oficial (transcript_official)
+    has_transcript = "transcript_official" in data or "transcript" in data
+    if has_transcript:
+        transcript = data.get("transcript_official", data.get("transcript"))
+        if not transcript or not isinstance(transcript, str) or not transcript.strip():
+            return False, "A transcrição oficial (gabarito) é obrigatória.", None, 422
+        clean_transcript = transcript.strip()
+        if len(clean_transcript) > 500:
+            return False, "O gabarito oficial deve ter no máximo 500 caracteres.", None, 422
+        clean_data["transcript_official"] = clean_transcript
+
+    # 5. Dificuldade
+    if "difficulty" in data:
+        difficulty = (data.get("difficulty") or "").strip().lower()
+        if difficulty not in ("easy", "medium", "hard"):
+            return False, "Nível de dificuldade inválido. Escolha entre: easy, medium ou hard.", None, 400
+        clean_data["difficulty"] = difficulty
+
+    # 6. Sotaque
+    if "accent" in data:
+        accent = (data.get("accent") or "").strip()
+        if not accent:
+            return False, "O sotaque é obrigatório.", None, 400
+        if len(accent) > 50:
+            return False, "O sotaque deve ter no máximo 50 caracteres.", None, 400
+        clean_data["accent"] = accent
+
+    # 7. Status Ativo / Inativo
+    if "is_active" in data:
+        clean_data["is_active"] = bool(data.get("is_active"))
+
+    return True, None, clean_data, 200
