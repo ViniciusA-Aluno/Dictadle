@@ -83,6 +83,7 @@ class TestPerformanceBenchmarksQ07:
 
         p95 = calculate_percentile(latencies, 95)
         avg = sum(latencies) / len(latencies)
+        print(f"\n[Q-07 Benchmark] GET /api/challenges/active -> Média: {avg*1000:.2f}ms | p95: {p95*1000:.2f}ms ({p95:.4f}s)")
 
         # Meta Q-07: p95 <= 2.0s
         assert p95 < 2.0, f"Tempo de resposta p95 ({p95:.4f}s) excedeu o limite de 2s"
@@ -101,6 +102,8 @@ class TestPerformanceBenchmarksQ07:
             assert res.status_code == 200
 
         p95 = calculate_percentile(latencies, 95)
+        avg = sum(latencies) / len(latencies)
+        print(f"\n[Q-07 Benchmark] GET /api/challenges/daily/playback -> Média: {avg*1000:.2f}ms | p95: {p95*1000:.2f}ms ({p95:.4f}s)")
         assert p95 < 2.0, f"Tempo de resposta p95 ({p95:.4f}s) excedeu o limite de 2s"
 
     def test_q07_benchmark_single_challenge_playback_p95(self, client, student_auth_headers, seed_challenges):
@@ -117,6 +120,8 @@ class TestPerformanceBenchmarksQ07:
             assert res.status_code == 200
 
         p95 = calculate_percentile(latencies, 95)
+        avg = sum(latencies) / len(latencies)
+        print(f"\n[Q-07 Benchmark] GET /api/challenges/{challenge_id}/playback -> Média: {avg*1000:.2f}ms | p95: {p95*1000:.2f}ms ({p95:.4f}s)")
         assert p95 < 2.0, f"Tempo de resposta p95 ({p95:.4f}s) excedeu o limite de 2s"
 
     def test_q07_benchmark_admin_challenge_list_p95(self, client, admin_auth_headers, seed_challenges):
@@ -132,4 +137,6 @@ class TestPerformanceBenchmarksQ07:
             assert res.status_code == 200
 
         p95 = calculate_percentile(latencies, 95)
+        avg = sum(latencies) / len(latencies)
+        print(f"\n[Q-07 Benchmark] GET /api/challenges (admin) -> Média: {avg*1000:.2f}ms | p95: {p95*1000:.2f}ms ({p95:.4f}s)")
         assert p95 < 2.0, f"Tempo de resposta p95 ({p95:.4f}s) excedeu o limite de 2s"
