@@ -1,23 +1,135 @@
-import React, { useState } from 'react';
-import { UserCheck, Settings, LogOut, Video, Sparkles, Volume2 } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import {
+  Settings,
+  LogOut,
+  Sparkles,
+  Volume2,
+  Loader2,
+  AlertCircle,
+  RefreshCw,
+  Compass,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react';
 import AnswerInputBox from '../components/AnswerInputBox';
 import DiffFeedbackDisplay from '../components/DiffFeedbackDisplay';
+import ChallengeVideoPlayer from '../components/ChallengeVideoPlayer';
+import { challengeService } from '../services/api';
+import { useMediaKeyboardShortcuts } from '../hooks/useMediaKeyboardShortcuts';
+
+// Cache em memória para transições instantâneas entre rotas (evita recarregamento ao voltar de Configurações)
+let challengesMemoryCache = null;
+let currentChallengeIndexCache = 0;
 
 /**
- * ChallengeResolutionPage (US-92)
+ * ChallengeResolutionPage (US-92 / US-107 / SCRUM-149 / SCRUM-150 / SCRUM-20)
  * 
- * Tela de resolução de desafios com player de vídeo/áudio e campo de transcrição.
+ * Tela principal de prática do estudante com integração do YouTube Embed Player,
+ * contenção estrita do recorte de áudio, controles customizados, navegação entre desafios e atalhos (Driver 003).
  */
 export default function ChallengeResolutionPage({ currentUser, onNavigateToSettings, onLogout }) {
+  const navigate = useNavigate();
+
+  const [challengesList, setChallengesList] = useState(challengesMemoryCache || []);
+  const [currentIndex, setCurrentIndex] = useState(currentChallengeIndexCache || 0);
+  const [challenge, setChallenge] = useState(
+    challengesMemoryCache ? challengesMemoryCache[currentChallengeIndexCache] || challengesMemoryCache[0] : null
+  );
+  const [isLoadingChallenge, setIsLoadingChallenge] = useState(!challengesMemoryCache);
+  const [challengeError, setChallengeError] = useState(null);
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittedAnswer, setSubmittedAnswer] = useState(null);
 
-  // Exemplo de gabarito para simulação enquanto a API de validação (US-91) é desenvolvida
+  const playerControlsRef = useRef(null);
+  const answerTextareaRef = useRef(null);
+
+  // Simulação de solução enquanto a validação com IA (US-91) é integrada
   const sampleSolution = "Hey guys, how is it going?";
+
+  // Carrega lista de desafios ativos para permitir navegação fluida
+  const loadChallengeData = async () => {
+    if (!challengesMemoryCache) {
+      setIsLoadingChallenge(true);
+    }
+    setChallengeError(null);
+    try {
+      let list = [];
+      try {
+        const activeRes = await challengeService.getActiveChallenges();
+        list = activeRes.data?.challenges || [];
+      } catch (e) {
+        // Fallback
+      }
+
+      if (list.length > 0) {
+        challengesMemoryCache = list;
+        setChallengesList(list);
+        setChallenge((prev) => prev || list[0]);
+      } else {
+        const res = await challengeService.getDailyPlayback();
+        const singleList = [res.data];
+        challengesMemoryCache = singleList;
+        setChallenge((prev) => prev || res.data);
+        setChallengesList(singleList);
+      }
+    } catch (err) {
+      if (!challengesMemoryCache) {
+        try {
+          const fallbackRes = await challengeService.getPlayback(20);
+          const singleList = [fallbackRes.data];
+          challengesMemoryCache = singleList;
+          setChallenge(fallbackRes.data);
+          setChallengesList(singleList);
+        } catch (fallbackErr) {
+          const msg = err.response?.data?.error || 'Não foi possível carregar o desafio no momento.';
+          setChallengeError(msg);
+        }
+      }
+    } finally {
+      setIsLoadingChallenge(false);
+    }
+  };
+
+  useEffect(() => {
+    loadChallengeData();
+  }, []);
+
+  const handleSelectChallenge = (index) => {
+    if (index >= 0 && index < challengesList.length) {
+      currentChallengeIndexCache = index;
+      setCurrentIndex(index);
+      setChallenge(challengesList[index]);
+      setSubmittedAnswer(null);
+    }
+  };
+
+  const handleNextChallenge = () => {
+    if (challengesList.length > 0) {
+      const nextIndex = (currentIndex + 1) % challengesList.length;
+      handleSelectChallenge(nextIndex);
+    }
+  };
+
+  const handlePrevChallenge = () => {
+    if (challengesList.length > 0) {
+      const prevIndex = (currentIndex - 1 + challengesList.length) % challengesList.length;
+      handleSelectChallenge(prevIndex);
+    }
+  };
+
+  // Driver DA-USA-I1-003 (SCRUM-20): Listener global de atalhos de teclado sem perda de foco
+  useMediaKeyboardShortcuts({
+    onTogglePlay: () => playerControlsRef.current?.togglePlay?.(),
+    onRewind: (sec) => playerControlsRef.current?.rewind?.(sec),
+    onReplay: () => playerControlsRef.current?.replay?.(),
+    enabled: !!challenge,
+    targetInputRef: answerTextareaRef,
+  });
 
   const handleAnswerSubmit = async (answerText) => {
     setIsSubmitting(true);
-
     // Simula tempo de resposta do servidor de avaliação
     setTimeout(() => {
       setSubmittedAnswer(answerText);
@@ -31,7 +143,7 @@ export default function ChallengeResolutionPage({ currentUser, onNavigateToSetti
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
-      {/* Cabeçalho */}
+      {/* Cabeçalho Superior */}
       <header className="bg-white border-b border-slate-200 px-4 sm:px-6 py-3.5 flex items-center justify-between sticky top-0 z-10 shadow-xs">
         <div className="flex items-center gap-3">
           <div className="bg-indigo-600 text-white p-2 rounded-xl">
@@ -49,6 +161,15 @@ export default function ChallengeResolutionPage({ currentUser, onNavigateToSetti
               Olá, <strong className="text-slate-800">{currentUser.username}</strong>
             </span>
           )}
+
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition"
+            title="Ir para o Dashboard"
+          >
+            <Compass className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Dashboard</span>
+          </button>
 
           <button
             onClick={onNavigateToSettings}
@@ -72,51 +193,129 @@ export default function ChallengeResolutionPage({ currentUser, onNavigateToSetti
 
       {/* Conteúdo Principal */}
       <main className="flex-1 max-w-4xl mx-auto w-full px-4 py-6 sm:py-8 space-y-6">
-        {/* Banner Informativo do Desafio */}
-        <div className="flex items-center justify-between bg-white px-4 py-3 rounded-2xl border border-slate-200 text-xs text-slate-600">
+        {/* Banner Informativo do Desafio com Metadados e Navegação */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between bg-white px-4 py-3 rounded-2xl border border-slate-200 text-xs text-slate-600 gap-3 shadow-xs">
           <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-indigo-600" />
-            <span className="font-medium">Ouça com atenção e digite exatamente o que os falantes disserem.</span>
+            <Sparkles className="w-4 h-4 text-indigo-600 flex-shrink-0" />
+            <span className="font-medium">
+              {challenge ? challenge.title : 'Ouça com atenção e digite exatamente o que os falantes disserem.'}
+            </span>
           </div>
-          <span className="hidden sm:inline-block font-mono text-[11px] text-slate-400">
-            Nível: Iniciante
-          </span>
+
+          <div className="flex items-center gap-3">
+            {challenge && (
+              <div className="flex items-center gap-2 font-mono text-[11px]">
+                <span className="px-2 py-0.5 bg-amber-50 text-amber-700 font-bold rounded-md uppercase">
+                  {challenge.difficulty}
+                </span>
+                <span className="px-2 py-0.5 bg-slate-100 text-slate-700 font-semibold rounded-md">
+                  {challenge.accent}
+                </span>
+                <span className="text-slate-400">
+                  {challenge.duration}s
+                </span>
+              </div>
+            )}
+
+            {/* Navegador entre Desafios */}
+            {challengesList.length > 1 && (
+              <div className="flex items-center gap-1.5 border-l border-slate-200 pl-3">
+                <span className="text-[11px] font-semibold text-slate-500">
+                  {currentIndex + 1} de {challengesList.length}
+                </span>
+                <button
+                  type="button"
+                  onClick={handlePrevChallenge}
+                  className="p-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition"
+                  title="Desafio anterior"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleNextChallenge}
+                  className="flex items-center gap-1 px-2 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-[11px] transition"
+                  title="Próximo desafio"
+                >
+                  <span>Próximo</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Zona 1: Placeholder do Player de Vídeo (US-107 / US-91) */}
-        <div className="relative aspect-video w-full bg-slate-900 rounded-3xl overflow-hidden border border-slate-800 shadow-lg flex flex-col items-center justify-center text-center p-6 text-slate-400">
-          <div className="w-16 h-16 rounded-full bg-slate-800/80 border border-slate-700 flex items-center justify-center text-indigo-400 mb-3 shadow-inner">
-            <Video className="w-8 h-8" />
+        {/* Zona 1: Player de Vídeo e Áudio Oficial (US-107 / SCRUM-149 / SCRUM-150) */}
+        {isLoadingChallenge ? (
+          <div className="aspect-video w-full bg-slate-900 rounded-3xl border border-slate-800 flex flex-col items-center justify-center text-slate-400 gap-3">
+            <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+            <p className="text-xs font-medium">Buscando clipe do desafio...</p>
           </div>
-          <h2 className="text-white text-base sm:text-lg font-bold">Player de Vídeo e Áudio</h2>
-          <p className="text-xs text-slate-400 max-w-md mt-1">
-            Esta área será integrada com a reprodução de mídia (US-107) e controles interativos de repetição de áudio.
-          </p>
-          <div className="mt-4 px-3 py-1 bg-slate-800 border border-slate-700 rounded-full text-[11px] text-slate-300 font-mono">
-            Gabarito da rodada: "{sampleSolution}"
+        ) : challengeError ? (
+          <div className="aspect-video w-full bg-slate-900 rounded-3xl border border-slate-800 flex flex-col items-center justify-center text-center p-6 text-slate-300">
+            <AlertCircle className="w-10 h-10 text-rose-500 mb-3" />
+            <h3 className="text-white font-bold text-base">Falha ao carregar clipe</h3>
+            <p className="text-xs text-slate-400 mt-1 max-w-sm">{challengeError}</p>
+            <button
+              onClick={loadChallengeData}
+              className="mt-4 flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl transition"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              <span>Tentar novamente</span>
+            </button>
           </div>
-        </div>
+        ) : challenge ? (
+          <ChallengeVideoPlayer
+            videoId={challenge.youtube_video_id}
+            startTime={challenge.start_time_seconds}
+            endTime={challenge.end_time_seconds}
+            title={challenge.title}
+            playerControlsRef={playerControlsRef}
+            onNavigateToCatalog={() => navigate('/dashboard')}
+          />
+        ) : null}
 
-        {/* Zona 2: Campo de Input de Respostas (US-92) */}
+        {/* Zona 2: Campo de Input de Respostas (US-92 / SCRUM-20) */}
         <div className="space-y-4">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">
-            Sua Resposta
-          </h3>
+          <div className="flex items-center justify-between">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+              Sua Transcrição
+            </h3>
+            <span className="text-[11px] text-slate-400 hidden sm:inline">
+              Dica: Use <kbd className="px-1 py-0.5 bg-slate-200/80 rounded font-mono text-[10px]">Ctrl+Espaço</kbd> para pausar o vídeo sem sair do texto
+            </span>
+          </div>
 
           <AnswerInputBox
             onSubmit={handleAnswerSubmit}
             isSubmitting={isSubmitting}
             autoFocus={true}
+            inputRef={answerTextareaRef}
             placeholder="Ouça o áudio e digite o que compreendeu... Pressione Enter para enviar."
           />
 
           {/* Zona 3: Feedback Visual da Avaliação (SCRUM-148) */}
           {submittedAnswer && (
-            <DiffFeedbackDisplay
-              attempt={submittedAnswer}
-              expected={sampleSolution}
-              onReset={handleReset}
-            />
+            <div className="space-y-3">
+              <DiffFeedbackDisplay
+                attempt={submittedAnswer}
+                expected={sampleSolution}
+                onReset={handleReset}
+              />
+
+              {challengesList.length > 1 && (
+                <div className="flex justify-end pt-2">
+                  <button
+                    type="button"
+                    onClick={handleNextChallenge}
+                    className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl transition shadow-sm"
+                  >
+                    <span>Ir para o Próximo Desafio</span>
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+            </div>
           )}
         </div>
       </main>
