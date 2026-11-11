@@ -5,11 +5,12 @@ import VideoUnavailableNotice from './VideoUnavailableNotice';
 import { Loader2, Video, Play } from 'lucide-react';
 
 /**
- * ChallengeVideoPlayer Component (US-107 / SCRUM-149 / SCRUM-150)
+ * ChallengeVideoPlayer Component (US-107 / SCRUM-149 / SCRUM-150 / SCRUM-17 / DA-USA-I1-001)
  * 
  * Componente principal de reprodução de mídia para os desafios de transcrição.
  * Integra a IFrame Player API oficial do YouTube, contenção temporal estrita,
  * controles visuais personalizados e fallback amigável em caso de indisponibilidade de mídia.
+ * Implementa acessibilidade semântica WAI-ARIA com suporte a leitores de tela e navegação por teclado.
  */
 export default function ChallengeVideoPlayer({
   videoId,
@@ -74,7 +75,11 @@ export default function ChallengeVideoPlayer({
   }
 
   return (
-    <div className="w-full space-y-3">
+    <div
+      role="region"
+      aria-label={`Reprodutor de vídeo: ${title}`}
+      className="w-full space-y-3"
+    >
       {/* Container de Reprodução de Vídeo (16:9) */}
       <div className="relative aspect-video w-full bg-black rounded-3xl overflow-hidden border border-slate-800 shadow-xl group">
         {/* Slot onde a YouTube API monta o iframe */}
@@ -82,7 +87,10 @@ export default function ChallengeVideoPlayer({
 
         {/* Overlay enquanto a API do YouTube está carregando */}
         {!isReady && (
-          <div className="absolute inset-0 bg-slate-900 flex flex-col items-center justify-center text-slate-400 gap-3 z-10">
+          <div
+            className="absolute inset-0 bg-slate-900 flex flex-col items-center justify-center text-slate-400 gap-3 z-10"
+            aria-live="polite"
+          >
             <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
             <p className="text-xs font-medium">Carregando reprodutor oficial...</p>
           </div>
@@ -90,9 +98,18 @@ export default function ChallengeVideoPlayer({
 
         {/* Camada interativa superior e botão de Play centralizado quando o clipe está pausado */}
         <div
-          className="absolute inset-0 z-10 cursor-pointer flex items-center justify-center transition-all bg-black/10 hover:bg-black/20"
+          role="button"
+          tabIndex={0}
+          className="absolute inset-0 z-10 cursor-pointer flex items-center justify-center transition-all bg-black/10 hover:bg-black/20 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-inset"
           onClick={togglePlay}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              togglePlay();
+            }
+          }}
           title={isPlaying ? 'Clique para pausar' : 'Clique para reproduzir (Ctrl + Espaço)'}
+          aria-label={isPlaying ? 'Pausar vídeo do desafio' : 'Reproduzir vídeo do desafio'}
         >
           {!isPlaying && isReady && (
             <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-indigo-600/90 hover:bg-indigo-600 text-white flex items-center justify-center shadow-2xl backdrop-blur-xs border-2 border-white/30 transition-all transform group-hover:scale-110 active:scale-95 animate-in fade-in zoom-in-95 duration-200">
@@ -102,7 +119,7 @@ export default function ChallengeVideoPlayer({
         </div>
       </div>
 
-      {/* Controles Customizados Dictadle (SCRUM-150) */}
+      {/* Controles Customizados Dictadle (SCRUM-150 / DA-USA-I1-001) */}
       <PlayerControls
         isPlaying={isPlaying}
         isBuffering={isBuffering}
