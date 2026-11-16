@@ -1,0 +1,38 @@
+// DER Dictadle v1.0 (baseado em backend/app/models/user.py e challenge.py)
+
+Table users {
+  id integer [pk, increment]
+  username varchar(80) [not null, unique]
+  email varchar(120) [not null, unique]
+  password_hash varchar(255) [not null]
+  role varchar(20) [not null, default: 'student']
+  is_active boolean [not null, default: true]
+  is_2fa_enabled boolean [not null, default: false]
+  two_factor_secret varchar(64)
+  created_at timestamp [not null]
+}
+
+Table challenges {
+  id integer [pk, increment]
+  title varchar(150) [not null]
+  video_url varchar(255) [not null]
+  youtube_video_id varchar(32) [not null]
+  start_time_seconds integer [not null]
+  end_time_seconds integer [not null]
+  difficulty varchar(20) [not null, default: 'medium']
+  accent varchar(50) [not null, default: 'American']
+  transcript_official text [not null]
+  is_active boolean [not null, default: true]
+  created_at timestamp [not null]
+  updated_at timestamp
+}
+
+// Planejada para Sprint 3 (SCRUM-93 / SCRUM-110 / SCRUM-172)
+Table user_attempts {
+  id integer [pk, increment]
+  user_id integer [not null, ref: > users.id]
+  challenge_id integer [not null, ref: > challenges.id]
+  submitted_transcript text [not null]
+  accuracy_percentage float [not null]
+  created_at timestamp [not null]
+}
