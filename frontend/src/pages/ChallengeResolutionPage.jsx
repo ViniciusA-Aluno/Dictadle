@@ -41,11 +41,14 @@ export default function ChallengeResolutionPage({ currentUser, onNavigateToSetti
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittedAnswer, setSubmittedAnswer] = useState(null);
+  const [officialTranscript, setOfficialTranscript] = useState(null);
+  const [submitError, setSubmitError] = useState(null);
 
   const playerControlsRef = useRef(null);
   const answerTextareaRef = useRef(null);
+  const isSubmittingRef = useRef(false);
 
-  // Simulação de solução enquanto a validação com IA (US-91) é integrada
+  // Fallback legado caso o backend não retorne transcript_official
   const sampleSolution = "Hey guys, how is it going?";
 
   // Carrega lista de desafios ativos para permitir navegação fluida
@@ -102,6 +105,8 @@ export default function ChallengeResolutionPage({ currentUser, onNavigateToSetti
       setCurrentIndex(index);
       setChallenge(challengesList[index]);
       setSubmittedAnswer(null);
+      setOfficialTranscript(null);
+      setSubmitError(null);
     }
   };
 
@@ -129,16 +134,35 @@ export default function ChallengeResolutionPage({ currentUser, onNavigateToSetti
   });
 
   const handleAnswerSubmit = async (answerText) => {
+    const cleanText = (answerText || '').trim();
+    if (!cleanText || !challenge || isSubmittingRef.current) {
+      return;
+    }
+
+    isSubmittingRef.current = true;
     setIsSubmitting(true);
-    // Simula tempo de resposta do servidor de avaliação
-    setTimeout(() => {
-      setSubmittedAnswer(answerText);
+    setSubmitError(null);
+
+    try {
+      const response = await challengeService.submitTranscription(challenge.id, cleanText);
+      const data = response.data || {};
+      setSubmittedAnswer(data.attempt?.submitted_transcript || cleanText);
+      setOfficialTranscript(data.transcript_official || null);
+    } catch (err) {
+      const msg =
+        err.response?.data?.error ||
+        'Não foi possível enviar sua transcrição. Verifique sua conexão e tente novamente.';
+      setSubmitError(msg);
+    } finally {
+      isSubmittingRef.current = false;
       setIsSubmitting(false);
-    }, 600);
+    }
   };
 
   const handleReset = () => {
     setSubmittedAnswer(null);
+    setOfficialTranscript(null);
+    setSubmitError(null);
   };
 
   return (
@@ -321,9 +345,10 @@ export default function ChallengeResolutionPage({ currentUser, onNavigateToSetti
           <AnswerInputBox
             onSubmit={handleAnswerSubmit}
             isSubmitting={isSubmitting}
+            submitError={submitError}
             autoFocus={true}
             inputRef={answerTextareaRef}
-            placeholder="Ouça o áudio e digite o que compreendeu... Pressione Enter para enviar."
+            placeholder="Ouça o áudio e digite o que compreendeu... Pressione Ctrl+Enter para enviar."
           />
 
           {/* Zona 3: Feedback Visual da Avaliação (SCRUM-148) */}
@@ -331,7 +356,7 @@ export default function ChallengeResolutionPage({ currentUser, onNavigateToSetti
             <div className="space-y-3">
               <DiffFeedbackDisplay
                 attempt={submittedAnswer}
-                expected={sampleSolution}
+                expected={officialTranscript || sampleSolution}
                 onReset={handleReset}
               />
 
