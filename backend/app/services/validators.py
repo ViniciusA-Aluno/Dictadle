@@ -296,3 +296,37 @@ def validate_challenge_update_payload(data: Any, current_challenge: Any = None) 
         clean_data["is_active"] = bool(data.get("is_active"))
 
     return True, None, clean_data, 200
+
+
+def validate_submission_payload(data: Any, max_length: int = 500) -> Tuple[bool, Optional[str], Optional[str], int]:
+    """
+    Valida o payload de submissão de transcrição de desafio (SCRUM-109 / SCRUM-185):
+    - Aceita a chave 'submitted_transcript' (ou 'transcript' como fallback).
+    - Aplica .strip() nas extremidades.
+    - Rejeita transcrição ausente, não-string, vazia ou contendo apenas espaços (HTTP 400).
+    - Rejeita transcrição com tamanho superior a 500 caracteres (HTTP 422).
+    Retorna (is_valid, error_message, clean_transcript, status_code).
+    """
+    if not isinstance(data, dict):
+        return False, "Corpo da requisição deve ser um objeto JSON.", None, 400
+
+    raw_transcript = data.get("submitted_transcript")
+    if raw_transcript is None and "transcript" in data:
+        raw_transcript = data.get("transcript")
+
+    if raw_transcript is None or not isinstance(raw_transcript, str):
+        return False, "A transcrição não pode estar vazia.", None, 400
+
+    clean_transcript = raw_transcript.strip()
+    if not clean_transcript:
+        return False, "A transcrição não pode estar vazia.", None, 400
+
+    if len(clean_transcript) > max_length:
+        return (
+            False,
+            f"A transcrição deve ter no máximo {max_length} caracteres.",
+            None,
+            422,
+        )
+
+    return True, None, clean_transcript, 200

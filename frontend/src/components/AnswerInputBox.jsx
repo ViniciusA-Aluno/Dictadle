@@ -18,6 +18,7 @@ export default function AnswerInputBox({
   onSubmit,
   isSubmitting = false,
   disabled = false,
+  submitError = null,
   maxLength = 500,
   placeholder = "Digite aqui a transcrição do áudio que você ouviu...",
   autoFocus = true,
@@ -25,6 +26,7 @@ export default function AnswerInputBox({
 }) {
   const [value, setValue] = useState('');
   const internalRef = useRef(null);
+  const submitLockRef = useRef(false);
   const textareaRef = inputRef || internalRef;
 
   // Auto-foco ao montar o componente
@@ -33,6 +35,13 @@ export default function AnswerInputBox({
       textareaRef.current.focus();
     }
   }, [autoFocus]);
+
+  // Libera a trava síncrona quando isSubmitting retorna para false
+  useEffect(() => {
+    if (!isSubmitting) {
+      submitLockRef.current = false;
+    }
+  }, [isSubmitting]);
 
   const charCount = value.length;
   const isLimitReached = charCount >= maxLength;
@@ -47,8 +56,11 @@ export default function AnswerInputBox({
   };
 
   const handleKeyDown = (e) => {
-    // Enter sem Shift dispara submissão
-    if (e.key === 'Enter' && !e.shiftKey) {
+    // Suporte a Ctrl+Enter / Cmd+Enter (SCRUM-109) e Enter sem Shift (US-92)
+    const isCtrlOrCmdEnter = (e.ctrlKey || e.metaKey) && e.key === 'Enter';
+    const isPlainEnter = e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.metaKey;
+
+    if (isCtrlOrCmdEnter || isPlainEnter) {
       e.preventDefault();
       if (!isSubmitDisabled) {
         handleSubmit();
@@ -58,10 +70,20 @@ export default function AnswerInputBox({
 
   const handleSubmit = (e) => {
     if (e) e.preventDefault();
-    if (isSubmitDisabled) return;
+    if (isSubmitDisabled || submitLockRef.current) return;
 
+    const cleanValue = value.trim();
+    if (!cleanValue) return;
+
+    submitLockRef.current = true;
     if (onSubmit) {
-      onSubmit(value);
+      Promise.resolve(onSubmit(cleanValue)).finally(() => {
+        if (!isSubmitting) {
+          submitLockRef.current = false;
+        }
+      });
+    } else {
+      submitLockRef.current = false;
     }
   };
 
@@ -148,7 +170,7 @@ export default function AnswerInputBox({
           {/* Lado Direito: Dica de atalho e Botão Enviar */}
           <div className="flex items-center gap-2">
             <span id="transcription-shortcut-hint" className="hidden md:inline-block text-[11px] text-slate-400">
-              Pressione <kbd className="px-1.5 py-0.5 bg-slate-100 border border-slate-200 rounded text-slate-600 font-mono text-[10px]">Enter ↵</kbd> para enviar
+              Pressione <kbd className="px-1.5 py-0.5 bg-slate-100 border border-slate-200 rounded text-slate-600 font-mono text-[10px]">Ctrl+Enter</kbd> para enviar
             </span>
 
             <button
@@ -169,12 +191,23 @@ export default function AnswerInputBox({
               ) : (
                 <>
                   <Send className="w-4 h-4" />
-                  <span>Enviar Resposta</span>
+                  <span>Submeter Transcrição</span>
                 </>
               )}
             </button>
           </div>
         </div>
+
+        {/* Alerta de erro de submissão preservando o texto digitado (SCRUM-109 Cenário 5) */}
+        {submitError && (
+          <div
+            role="alert"
+            className="flex items-center gap-2 rounded-xl bg-rose-50 border border-rose-200 px-3 py-2 text-xs text-rose-700 font-medium"
+          >
+            <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" aria-hidden="true" />
+            <span>{submitError}</span>
+          </div>
+        )}
       </form>
     </div>
   );

@@ -78,6 +78,10 @@ export const challengeService = {
   getPlayback: (challengeId) => api.get(`/challenges/${challengeId}/playback`),
   getDailyPlayback: () => api.get('/challenges/daily/playback'),
   getActiveChallenges: () => api.get('/challenges/active'),
+  submitTranscription: (challengeId, submittedTranscript) =>
+    api.post(`/challenges/${challengeId}/submit`, {
+      submitted_transcript: submittedTranscript,
+    }),
 };
 
 export default api;

@@ -8,10 +8,12 @@ from datetime import datetime, timezone
 from flask import Blueprint, request, jsonify
 from app.extensions import db
 from app.models.challenge import Challenge
+from app.models.user_attempt import UserAttempt
 from app.routes.auth_routes import get_authenticated_user
 from app.services.validators import (
     validate_challenge_payload,
     validate_challenge_update_payload,
+    validate_submission_payload,
     sanitize_pagination_params
 )
 
@@ -240,3 +242,42 @@ def list_active_challenges():
         "challenges": [c.to_playback_dict() for c in challenges],
         "total": len(challenges)
     }), 200
+
+
+@challenge_bp.route("/<int:challenge_id>/submit", methods=["POST"])
+def submit_challenge_attempt(challenge_id: int):
+    """
+    Submissão de transcrição do estudante para um desafio (SCRUM-109 / SCRUM-185).
+    Exige autenticação JWT válida, valida o payload (não vazio, máx 500 caracteres),
+    persiste a tentativa na tabela user_attempts e libera o gabarito oficial
+    apenas após a submissão (política Anti-Cheat).
+    """
+    user, auth_error = get_authenticated_user()
+    if auth_error:
+        return auth_error
+
+    challenge = db.session.get(Challenge, challenge_id) if hasattr(db.session, "get") else Challenge.query.get(challenge_id)
+    if not challenge or not challenge.is_active:
+        return jsonify({"error": "Desafio não encontrado"}), 404
+
+    data = request.get_json(silent=True)
+    if data is None:
+        return jsonify({"error": "A transcrição não pode estar vazia."}), 400
+
+    is_valid, error_msg, clean_transcript, status_code = validate_submission_payload(data)
+    if not is_valid:
+        return jsonify({"error": error_msg}), status_code
+
+    attempt = UserAttempt(
+        user_id=user.id,
+        challenge_id=challenge.id,
+        submitted_transcript=clean_transcript,
+    )
+    db.session.add(attempt)
+    db.session.commit()
+
+    return jsonify({
+        "message": "Transcrição submetida com sucesso!",
+        "attempt": attempt.to_dict(),
+        "transcript_official": challenge.transcript_official,
+    }), 201
