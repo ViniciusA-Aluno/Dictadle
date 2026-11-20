@@ -11,14 +11,24 @@ export default function DiffFeedbackDisplay({
   tokens = null,
   attempt = '',
   expected = '',
+  accuracyPercentage = null,
+  wordsCorrect = null,
+  wordsTotal = null,
   onReset,
 }) {
   // Se os tokens não forem fornecidos prontos pelo backend, calculamos localmente
   const diffTokens = tokens || (attempt && expected ? computeWordDiff(attempt, expected) : []);
 
-  const totalWords = diffTokens.length;
-  const correctCount = diffTokens.filter(t => t.status === 'correct').length;
-  const accuracy = totalWords > 0 ? Math.round((correctCount / totalWords) * 100) : 0;
+  const computedTotal = diffTokens.length;
+  const computedCorrect = diffTokens.filter(t => t.status === 'correct').length;
+  const finalTotal = wordsTotal !== null ? wordsTotal : computedTotal;
+  const finalCorrect = wordsCorrect !== null ? wordsCorrect : computedCorrect;
+  const accuracy =
+    accuracyPercentage !== null
+      ? accuracyPercentage
+      : finalTotal > 0
+      ? Math.round((finalCorrect / finalTotal) * 100)
+      : 0;
 
   return (
     <div
@@ -31,7 +41,7 @@ export default function DiffFeedbackDisplay({
       {/* Cabeçalho do Feedback */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
         <div>
-          <h3 className="font-bold text-slate-800 text-sm sm:text-base flex items-center gap-2">
+          <h3 className="font-bold text-slate-800 text-sm sm:text-base flex items-center gap-2 flex-wrap">
             <span>Resultado da Transcrição</span>
             <span
               className="text-xs px-2 py-0.5 rounded-full font-bold bg-indigo-50 text-indigo-700"
@@ -39,6 +49,11 @@ export default function DiffFeedbackDisplay({
             >
               {accuracy}% de precisão
             </span>
+            {wordsTotal !== null && wordsCorrect !== null && (
+              <span className="text-xs text-slate-500 font-medium">
+                ({finalCorrect}/{finalTotal} palavras)
+              </span>
+            )}
           </h3>
           <p className="text-xs text-slate-500 mt-0.5">
             Compare o que você digitou com o gabarito do áudio
@@ -65,41 +80,50 @@ export default function DiffFeedbackDisplay({
         aria-label="Detalhamento palavra por palavra"
       >
         {diffTokens.map((token, index) => {
+          const displayWord = token.word ?? token.text ?? token.expected ?? '';
+          const expectedWord = token.expected ?? token.text ?? '';
+
           if (token.status === 'correct') {
             return (
               <span
                 key={index}
                 className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs sm:text-sm font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-xs"
                 title="Palavra correta"
-                aria-label={`${token.text} (palavra correta)`}
+                aria-label={`${displayWord} (palavra correta)`}
               >
-                {token.text}
+                {displayWord}
               </span>
             );
           }
 
-          if (token.status === 'error') {
+          if (token.status === 'incorrect' || token.status === 'error') {
+            const titleText = token.expected
+              ? `Palavra incorreta (esperado: "${token.expected}")`
+              : 'Palavra incorreta ou excedente';
+            const ariaText = token.expected
+              ? `${displayWord} (palavra incorreta, esperado: ${token.expected})`
+              : `${displayWord} (palavra incorreta)`;
             return (
               <span
                 key={index}
                 className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs sm:text-sm font-semibold bg-rose-100 text-rose-800 border border-rose-300 line-through decoration-rose-500 shadow-xs"
-                title="Palavra incorreta"
-                aria-label={`${token.text} (palavra incorreta)`}
+                title={titleText}
+                aria-label={ariaText}
               >
-                {token.text}
+                {displayWord}
               </span>
             );
           }
 
-          if (token.status === 'omission') {
+          if (token.status === 'missing' || token.status === 'omission') {
             return (
               <span
                 key={index}
                 className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs sm:text-sm font-semibold bg-amber-100 text-amber-800 border border-amber-300 border-dashed shadow-xs"
-                title="Palavra omitida"
-                aria-label={`${token.text} (palavra omitida)`}
+                title={`Palavra omitida: "${expectedWord}"`}
+                aria-label={`${expectedWord} (palavra omitida)`}
               >
-                +{token.text}
+                +{expectedWord}
               </span>
             );
           }
@@ -108,9 +132,9 @@ export default function DiffFeedbackDisplay({
             <span
               key={index}
               className="text-xs sm:text-sm text-slate-700"
-              aria-label={token.text}
+              aria-label={displayWord}
             >
-              {token.text}
+              {displayWord}
             </span>
           );
         })}

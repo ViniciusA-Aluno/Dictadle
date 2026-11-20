@@ -16,6 +16,7 @@ from app.services.validators import (
     validate_submission_payload,
     sanitize_pagination_params
 )
+from app.services.correction_service import evaluate_transcription
 
 challenge_bp = Blueprint("challenges", __name__, url_prefix="/api/challenges")
 
@@ -268,16 +269,24 @@ def submit_challenge_attempt(challenge_id: int):
     if not is_valid:
         return jsonify({"error": error_msg}), status_code
 
+    evaluation = evaluate_transcription(clean_transcript, challenge.transcript_official)
+
     attempt = UserAttempt(
         user_id=user.id,
         challenge_id=challenge.id,
         submitted_transcript=clean_transcript,
+        accuracy_percentage=evaluation["accuracy_percentage"],
     )
     db.session.add(attempt)
     db.session.commit()
 
     return jsonify({
-        "message": "Transcrição submetida com sucesso!",
+        "message": "Transcrição avaliada com sucesso!",
         "attempt": attempt.to_dict(),
+        "accuracy_percentage": evaluation["accuracy_percentage"],
+        "words_total": evaluation["words_total"],
+        "words_correct": evaluation["words_correct"],
+        "edit_distance": evaluation["edit_distance"],
+        "diff": evaluation["diff"],
         "transcript_official": challenge.transcript_official,
-    }), 201
+    }), 200

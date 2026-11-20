@@ -42,6 +42,7 @@ export default function ChallengeResolutionPage({ currentUser, onNavigateToSetti
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittedAnswer, setSubmittedAnswer] = useState(null);
   const [officialTranscript, setOfficialTranscript] = useState(null);
+  const [correctionResult, setCorrectionResult] = useState(null);
   const [submitError, setSubmitError] = useState(null);
 
   const playerControlsRef = useRef(null);
@@ -106,6 +107,7 @@ export default function ChallengeResolutionPage({ currentUser, onNavigateToSetti
       setChallenge(challengesList[index]);
       setSubmittedAnswer(null);
       setOfficialTranscript(null);
+      setCorrectionResult(null);
       setSubmitError(null);
     }
   };
@@ -148,6 +150,13 @@ export default function ChallengeResolutionPage({ currentUser, onNavigateToSetti
       const data = response.data || {};
       setSubmittedAnswer(data.attempt?.submitted_transcript || cleanText);
       setOfficialTranscript(data.transcript_official || null);
+      setCorrectionResult({
+        accuracy_percentage: data.accuracy_percentage ?? null,
+        words_total: data.words_total ?? null,
+        words_correct: data.words_correct ?? null,
+        edit_distance: data.edit_distance ?? null,
+        diff: Array.isArray(data.diff) ? data.diff : null,
+      });
     } catch (err) {
       const msg =
         err.response?.data?.error ||
@@ -162,6 +171,7 @@ export default function ChallengeResolutionPage({ currentUser, onNavigateToSetti
   const handleReset = () => {
     setSubmittedAnswer(null);
     setOfficialTranscript(null);
+    setCorrectionResult(null);
     setSubmitError(null);
   };
 
@@ -355,8 +365,12 @@ export default function ChallengeResolutionPage({ currentUser, onNavigateToSetti
           {submittedAnswer && (
             <div className="space-y-3">
               <DiffFeedbackDisplay
+                tokens={correctionResult?.diff || null}
                 attempt={submittedAnswer}
                 expected={officialTranscript || sampleSolution}
+                accuracyPercentage={correctionResult?.accuracy_percentage ?? null}
+                wordsCorrect={correctionResult?.words_correct ?? null}
+                wordsTotal={correctionResult?.words_total ?? null}
                 onReset={handleReset}
               />
 
