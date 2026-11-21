@@ -13,7 +13,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import AnswerInputBox from '../components/AnswerInputBox';
-import DiffFeedbackDisplay from '../components/DiffFeedbackDisplay';
+import CorrectionFeedbackPanel from '../components/CorrectionFeedbackPanel';
 import ChallengeVideoPlayer from '../components/ChallengeVideoPlayer';
 import { challengeService } from '../services/api';
 import { useMediaKeyboardShortcuts } from '../hooks/useMediaKeyboardShortcuts';
@@ -48,9 +48,6 @@ export default function ChallengeResolutionPage({ currentUser, onNavigateToSetti
   const playerControlsRef = useRef(null);
   const answerTextareaRef = useRef(null);
   const isSubmittingRef = useRef(false);
-
-  // Fallback legado caso o backend não retorne transcript_official
-  const sampleSolution = "Hey guys, how is it going?";
 
   // Carrega lista de desafios ativos para permitir navegação fluida
   const loadChallengeData = async () => {
@@ -155,7 +152,11 @@ export default function ChallengeResolutionPage({ currentUser, onNavigateToSetti
         words_total: data.words_total ?? null,
         words_correct: data.words_correct ?? null,
         edit_distance: data.edit_distance ?? null,
+        is_perfect: Boolean(data.is_perfect),
         diff: Array.isArray(data.diff) ? data.diff : null,
+        comparison: Array.isArray(data.comparison) ? data.comparison : null,
+        student_tokens: Array.isArray(data.student_tokens) ? data.student_tokens : null,
+        official_tokens: Array.isArray(data.official_tokens) ? data.official_tokens : null,
       });
     } catch (err) {
       const msg =
@@ -361,16 +362,18 @@ export default function ChallengeResolutionPage({ currentUser, onNavigateToSetti
             placeholder="Ouça o áudio e digite o que compreendeu... Pressione Ctrl+Enter para enviar."
           />
 
-          {/* Zona 3: Feedback Visual da Avaliação (SCRUM-148) */}
+          {/* Zona 3: Feedback Visual Comparativo da Correção (SCRUM-94 / SCRUM-189) */}
           {submittedAnswer && (
             <div className="space-y-3">
-              <DiffFeedbackDisplay
+              <CorrectionFeedbackPanel
                 tokens={correctionResult?.diff || null}
-                attempt={submittedAnswer}
-                expected={officialTranscript || sampleSolution}
+                studentTokens={correctionResult?.student_tokens || null}
+                officialTokens={correctionResult?.official_tokens || null}
+                transcriptOfficial={officialTranscript || ''}
                 accuracyPercentage={correctionResult?.accuracy_percentage ?? null}
                 wordsCorrect={correctionResult?.words_correct ?? null}
                 wordsTotal={correctionResult?.words_total ?? null}
+                isPerfect={Boolean(correctionResult?.is_perfect)}
                 onReset={handleReset}
               />
 

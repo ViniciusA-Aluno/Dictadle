@@ -208,3 +208,37 @@ class TestSubmitChallengeRoute:
             json={"submitted_transcript": "Stay calm everyone stay calm"},
         )
         assert res.status_code == 401
+
+    def test_scrum94_scenario_5_zero_cheat_transcript_only_exposed_after_submit(
+        self, client, student_headers, partial_challenge
+    ):
+        # Antes da submissão: /active e /playback não expõem transcript_official
+        res_active = client.get("/api/challenges/active", headers=student_headers)
+        assert res_active.status_code == 200
+        for item in res_active.get_json()["challenges"]:
+            assert "transcript_official" not in item
+
+        res_play = client.get(
+            f"/api/challenges/{partial_challenge.id}/playback",
+            headers=student_headers,
+        )
+        assert res_play.status_code == 200
+        assert "transcript_official" not in res_play.get_json()
+
+        # Após submissão: libera transcript_official e payload comparativo estruturado
+        res_submit = client.post(
+            f"/api/challenges/{partial_challenge.id}/submit",
+            json={"submitted_transcript": "I like learning english day"},
+            headers=student_headers,
+        )
+        assert res_submit.status_code == 200
+        payload = res_submit.get_json()
+        assert payload["transcript_official"] == "I love learning english every day"
+        assert payload["is_perfect"] is False
+        assert isinstance(payload["comparison"], list)
+        assert isinstance(payload["student_tokens"], list)
+        assert isinstance(payload["official_tokens"], list)
+        assert any(
+            t["word"] == "every" and t["status"] == "missing"
+            for t in payload["official_tokens"]
+        )
