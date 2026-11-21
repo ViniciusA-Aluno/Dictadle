@@ -17,6 +17,7 @@ from app.services.validators import (
     sanitize_pagination_params
 )
 from app.services.correction_service import evaluate_transcription
+from app.services.word_diff import WordDiffService
 
 challenge_bp = Blueprint("challenges", __name__, url_prefix="/api/challenges")
 
@@ -269,7 +270,7 @@ def submit_challenge_attempt(challenge_id: int):
     if not is_valid:
         return jsonify({"error": error_msg}), status_code
 
-    evaluation = evaluate_transcription(clean_transcript, challenge.transcript_official)
+    evaluation = WordDiffService.build_feedback(clean_transcript, challenge.transcript_official)
 
     attempt = UserAttempt(
         user_id=user.id,
@@ -287,6 +288,10 @@ def submit_challenge_attempt(challenge_id: int):
         "words_total": evaluation["words_total"],
         "words_correct": evaluation["words_correct"],
         "edit_distance": evaluation["edit_distance"],
+        "is_perfect": evaluation["is_perfect"],
         "diff": evaluation["diff"],
+        "comparison": evaluation["comparison"],
+        "student_tokens": evaluation["student_tokens"],
+        "official_tokens": evaluation["official_tokens"],
         "transcript_official": challenge.transcript_official,
     }), 200

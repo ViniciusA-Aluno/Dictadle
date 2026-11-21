@@ -3,6 +3,7 @@ from app.services.token_service import TokenService
 from app.services.video_service import VideoService
 from app.services.text_normalizer import normalize_text, tokenize
 from app.services.correction_service import levenshtein_word_diff, evaluate_transcription
+from app.services.word_diff import WordDiffService
 
 __all__ = [
     "TwoFactorService",
@@ -12,4 +13,5 @@ __all__ = [
     "tokenize",
     "levenshtein_word_diff",
     "evaluate_transcription",
+    "WordDiffService",
 ]
