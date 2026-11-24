@@ -87,3 +87,57 @@ Para atender ao requisito de **Usabilidade** na Release 2 (controle de mídia co
    npm --prefix frontend test
    ```
 
+---
+
+## Containerização (Docker & Docker Compose) e Primeiro Deploy Local (`US-167` / `SCRUM-167`)
+
+Na Sprint 3, a plataforma **Dictadle** conta com uma estrutura completa de containerização e orquestração via **Docker Compose** para provisionamento padronizado e deploy local com um único comando.
+
+### 1. Arquitetura de Contêineres
+* **`dictadle-db` (`postgres:16-alpine`):** Banco de dados relacional com volume persistente `dictadle_postgres_data` e *healthcheck* ativo via `pg_isready` (exposto no host na porta `5433` por padrão para coexistir sem conflito com instalações nativas do PostgreSQL na porta `5432`).
+* **`dictadle-backend` (`backend/Dockerfile`):** Imagem Python 3.11 com servidor WSGI **Gunicorn**, script [`entrypoint.sh`](../backend/entrypoint.sh) que aguarda o banco, aplica automaticamente as migrações Alembic (`flask db upgrade`) e garante o usuário administrador inicial (`flask seed-admin`), além de `HEALTHCHECK` consultando `/api/health/ready`.
+* **`dictadle-frontend` (`frontend/Dockerfile` + `frontend/nginx.conf`):** Build *multi-stage* (Node 20 Alpine $\rightarrow$ Nginx 1.27 Alpine) servindo o bundle React em produção na porta `8080`, com suporte a rotas SPA (`try_files $uri $uri/ /index.html`), compressão Gzip e **Proxy Reverso (`/api/`)** direcionado para `http://backend:5000/api/`.
+* **Rede Isolada:** Todos os serviços comunicam-se internamente pela rede bridge `dictadle-net`.
+
+### 2. Guia Passo a Passo para o Deploy Local
+
+1. **(Opcional) Customizar Variáveis de Ambiente:**
+   Copie o arquivo `.env.example` na raiz do projeto para `.env` caso deseje alterar portas ou credenciais padrão:
+   ```bash
+   cp .env.example .env
+   ```
+
+2. **Construir as Imagens e Iniciar o Deploy Local:**
+   Na raiz do repositório, execute:
+   ```bash
+   docker compose up -d --build
+   ```
+
+3. **Verificar o Status e Healthchecks dos Contêineres:**
+   ```bash
+   docker compose ps
+   ```
+   * Endpoints disponíveis após a subida:
+     * **Aplicação Web (Frontend + Proxy Nginx):** `http://localhost:8080`
+     * **API Backend Direta:** `http://localhost:5000/api/health/ready`
+     * **Credenciais Administrativas Padrão (Seed Automático):** `admin@dictadle.com` / `Admin12345`
+
+4. **Consultar Logs em Tempo Real:**
+   ```bash
+   docker compose logs -f
+   ```
+
+5. **Reiniciar ou Encerrar o Ambiente:**
+   ```bash
+   # Reiniciar preservando os dados no volume dictadle_postgres_data
+   docker compose restart
+
+   # Parar e remover os contêineres mantendo o volume de dados
+   docker compose down
+   ```
+
+6. **Verificação Automatizada da Configuração de Deploy (Pytest):**
+   ```bash
+   pytest backend/tests/integration/test_docker_deployment_config.py -v
+   ```
+
