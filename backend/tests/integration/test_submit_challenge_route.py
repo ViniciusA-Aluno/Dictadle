@@ -242,3 +242,65 @@ class TestSubmitChallengeRoute:
             t["word"] == "every" and t["status"] == "missing"
             for t in payload["official_tokens"]
         )
+
+    def test_us110_scenario_4_punctuation_only_submission_returns_zero_accuracy(
+        self, client, student_headers, active_challenge
+    ):
+        """
+        US-110 Cenário 4: Submissão contendo apenas caracteres de pontuação e símbolos.
+        Retorna 0% de acerto e tokens válidos vazios sem causar exceção na aplicação.
+        """
+        res = client.post(
+            f"/api/challenges/{active_challenge.id}/submit",
+            json={"submitted_transcript": "!?,... ---"},
+            headers=student_headers,
+        )
+        assert res.status_code == 200
+        payload = res.get_json()
+        assert payload["accuracy_percentage"] == 0.0
+        assert payload["words_correct"] == 0
+        assert payload["normalized_transcript"] == ""
+        assert payload["student_tokens"] == []
+
+    def test_us110_scenario_6_preserves_raw_text_in_database_while_evaluating_normalized(
+        self, app, client, student_headers, sample_user
+    ):
+        """
+        US-110 Cenário 6: Preservação do texto original no banco para histórico.
+        Dado que o estudante submeteu "Yes, I DO!"
+        Quando o registro da tentativa é salvo na tabela "user_attempts"
+        Então o campo "submitted_transcript" armazena o texto literal "Yes, I DO!"
+        E os cálculos de precisão refletem a versão normalizada (100%) sem alterar o histórico bruto.
+        """
+        challenge = Challenge(
+            id=29,
+            title="Yes I Do Clip",
+            video_url="https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+            youtube_video_id="dQw4w9WgXcQ",
+            start_time_seconds=0,
+            end_time_seconds=12,
+            difficulty="easy",
+            accent="American",
+            transcript_official="yes i do",
+            is_active=True,
+        )
+        db.session.add(challenge)
+        db.session.commit()
+
+        res = client.post(
+            f"/api/challenges/{challenge.id}/submit",
+            json={"submitted_transcript": "Yes, I DO!"},
+            headers=student_headers,
+        )
+        assert res.status_code == 200
+        payload = res.get_json()
+        assert payload["accuracy_percentage"] == 100.0
+        assert payload["normalized_transcript"] == "yes i do"
+        assert payload["attempt"]["submitted_transcript"] == "Yes, I DO!"
+
+        saved_attempt = UserAttempt.query.filter_by(
+            user_id=sample_user.id, challenge_id=challenge.id
+        ).first()
+        assert saved_attempt is not None
+        assert saved_attempt.submitted_transcript == "Yes, I DO!"
+        assert saved_attempt.accuracy_percentage == 100.0

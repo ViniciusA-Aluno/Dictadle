@@ -13,7 +13,7 @@ Calcula a acurácia determinística:
     accuracy_percentage = round((words_correct / words_total) * 100, 2)
 """
 from typing import Dict, List, Tuple
-from app.services.text_normalizer import tokenize
+from app.services.text_normalizer import TextNormalizer
 
 
 def levenshtein_word_diff(
@@ -94,17 +94,24 @@ def levenshtein_word_diff(
 
 def evaluate_transcription(submitted_text: str, official_transcript: str) -> Dict:
     """
-    Normaliza, tokeniza e avalia a transcrição submetida contra o gabarito oficial.
+    Normaliza, tokeniza e avalia a transcrição submetida contra o gabarito oficial
+    utilizando TextNormalizer (SCRUM-110 / SCRUM-183).
 
     Retorna dicionário contendo:
     - accuracy_percentage (float arredondado em 2 casas decimais)
     - words_total (int)
     - words_correct (int)
     - edit_distance (int — distância de Levenshtein em palavras)
+    - normalized_submitted (str — transcrição do estudante normalizada)
+    - normalized_expected (str — gabarito oficial normalizado)
+    - submitted_tokens (list[str] — tokens normalizados do estudante)
+    - expected_tokens (list[str] — tokens normalizados do gabarito)
     - diff (list[dict])
     """
-    expected_tokens = tokenize(official_transcript)
-    submitted_tokens = tokenize(submitted_text)
+    normalized_expected = TextNormalizer.normalize(official_transcript)
+    normalized_submitted = TextNormalizer.normalize(submitted_text)
+    expected_tokens = TextNormalizer.tokenize(official_transcript)
+    submitted_tokens = TextNormalizer.tokenize(submitted_text)
 
     diff, edit_distance = levenshtein_word_diff(submitted_tokens, expected_tokens)
 
@@ -119,5 +126,9 @@ def evaluate_transcription(submitted_text: str, official_transcript: str) -> Dic
         "words_total": words_total,
         "words_correct": words_correct,
         "edit_distance": edit_distance,
+        "normalized_submitted": normalized_submitted,
+        "normalized_expected": normalized_expected,
+        "submitted_tokens": submitted_tokens,
+        "expected_tokens": expected_tokens,
         "diff": diff,
     }

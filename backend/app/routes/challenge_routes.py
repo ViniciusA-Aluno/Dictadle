@@ -289,6 +289,8 @@ def submit_challenge_attempt(challenge_id: int):
         "words_correct": evaluation["words_correct"],
         "edit_distance": evaluation["edit_distance"],
         "is_perfect": evaluation["is_perfect"],
+        "normalized_transcript": evaluation["normalized_submitted"],
+        "normalized_official_transcript": evaluation["normalized_expected"],
         "diff": evaluation["diff"],
         "comparison": evaluation["comparison"],
         "student_tokens": evaluation["student_tokens"],
