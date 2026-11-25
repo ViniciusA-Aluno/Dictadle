@@ -4,6 +4,7 @@ import EditUserModal from '../components/EditUserModal';
 import DeleteUserModal from '../components/DeleteUserModal';
 import CreateChallengeModal from '../components/CreateChallengeModal';
 import ChallengesManager from '../components/ChallengesManager';
+import DictadleLogo from '../components/DictadleLogo';
 import { clearChallengesMemoryCache } from './ChallengeResolutionPage';
 import {
   ShieldCheck,
@@ -156,13 +157,11 @@ export default function AdminUsersPage({ currentUser, onNavigateToSettings, onLo
       {/* Cabeçalho */}
       <header className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between sticky top-0 z-20 shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="bg-purple-600 text-white p-2 rounded-xl shadow-md shadow-purple-200">
-            <ShieldCheck className="w-5 h-5" />
-          </div>
+          <DictadleLogo size="md" showText={false} />
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="font-extrabold text-slate-800 text-lg leading-none">Dictadle</h1>
-              <span className="px-2 py-0.5 bg-purple-100 text-purple-700 text-[10px] font-black rounded-full uppercase tracking-wider">
+              <h1 className="font-extrabold text-slate-800 text-lg leading-none font-display">Dictadle</h1>
+              <span className="px-2 py-0.5 bg-brand-100 text-brand-700 text-[10px] font-black rounded-full uppercase tracking-wider">
                 Admin
               </span>
             </div>
