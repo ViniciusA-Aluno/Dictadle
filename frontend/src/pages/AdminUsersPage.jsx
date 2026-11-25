@@ -4,6 +4,7 @@ import EditUserModal from '../components/EditUserModal';
 import DeleteUserModal from '../components/DeleteUserModal';
 import CreateChallengeModal from '../components/CreateChallengeModal';
 import ChallengesManager from '../components/ChallengesManager';
+import { clearChallengesMemoryCache } from './ChallengeResolutionPage';
 import {
   ShieldCheck,
   Settings,
@@ -792,6 +793,7 @@ export default function AdminUsersPage({ currentUser, onNavigateToSettings, onLo
         isOpen={isCreateChallengeOpen}
         onClose={() => setIsCreateChallengeOpen(false)}
         onSuccess={(createdChallenge, msg) => {
+          clearChallengesMemoryCache();
           setToastMessage({ type: 'success', text: msg || 'Desafio cadastrado com sucesso!' });
           setChallengeRefreshTrigger((prev) => prev + 1);
           setTimeout(() => setToastMessage(null), 5000);

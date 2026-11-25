@@ -18,9 +18,37 @@ import ChallengeVideoPlayer from '../components/ChallengeVideoPlayer';
 import { challengeService } from '../services/api';
 import { useMediaKeyboardShortcuts } from '../hooks/useMediaKeyboardShortcuts';
 
-// Cache em memória para transições instantâneas entre rotas (evita recarregamento ao voltar de Configurações)
+// SCRUM-191: Cache em memória para transições instantâneas entre rotas (evita recarregamento ao voltar de Configurações)
 let challengesMemoryCache = null;
 let currentChallengeIndexCache = 0;
+
+/**
+ * Invalida e limpa o cache em memória de desafios (SCRUM-191).
+ * Essencial para evitar a persistência de dados obsoletos ao realizar logout,
+ * alternar contas ou após modificações de desafios no painel administrativo em navegação SPA.
+ */
+export function clearChallengesMemoryCache() {
+  challengesMemoryCache = null;
+  currentChallengeIndexCache = 0;
+}
+
+export function getChallengesMemoryCache() {
+  return challengesMemoryCache;
+}
+
+export function getCurrentChallengeIndexCache() {
+  return currentChallengeIndexCache;
+}
+
+export function setChallengesMemoryCacheForTest(cache, index = 0) {
+  challengesMemoryCache = cache;
+  currentChallengeIndexCache = index;
+}
+
+// Invalidação via evento customizado no browser para cenários desacoplados
+if (typeof window !== 'undefined') {
+  window.addEventListener('dictadle:clear-challenges-cache', clearChallengesMemoryCache);
+}
 
 /**
  * ChallengeResolutionPage (US-92 / US-107 / SCRUM-149 / SCRUM-150 / SCRUM-20)
@@ -221,7 +249,10 @@ export default function ChallengeResolutionPage({ currentUser, onNavigateToSetti
           </button>
 
           <button
-            onClick={onLogout}
+            onClick={() => {
+              clearChallengesMemoryCache();
+              if (onLogout) onLogout();
+            }}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition focus:outline-none focus:ring-2 focus:ring-rose-500"
             title="Encerrar sessão"
             aria-label="Encerrar sessão"
