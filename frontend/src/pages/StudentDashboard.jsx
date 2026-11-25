@@ -30,7 +30,7 @@ export default function StudentDashboard({ currentUser, onNavigateToSettings, on
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
       {/* Cabeçalho */}
-      <header className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between">
+      <header className="bg-white border-b border-slate-200 px-4 sm:px-6 py-3.5 sm:py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="bg-indigo-600 text-white p-2 rounded-xl">
             <UserCheck className="w-5 h-5" />
@@ -61,9 +61,9 @@ export default function StudentDashboard({ currentUser, onNavigateToSettings, on
       </header>
 
       {/* Conteúdo Principal */}
-      <main className="max-w-4xl mx-auto w-full px-4 py-8 space-y-6">
+      <main className="max-w-4xl mx-auto w-full px-3 sm:px-4 py-4 sm:py-8 space-y-4 sm:space-y-6">
         {/* Card de Boas-Vindas */}
-        <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="bg-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-2xl font-bold text-slate-800">Olá, {currentUser.username}!</h2>
