@@ -232,11 +232,11 @@ def validate_challenge_update_payload(data: Any, current_challenge: Any = None) 
         clean_data["video_url"] = clean_video_url
         clean_data["youtube_video_id"] = video_id
 
-    # 3. Intervalo de Tempo e Duração (Janela Pedagógica estrita de 10 a 15 segundos)
+    # 3. Intervalo de Tempo e Duração (Consistente com criação: 5 a 30 segundos, recomendado 10 a 15s - SCRUM-192)
     has_start = "start_time_seconds" in data or "start_time" in data
     has_end = "end_time_seconds" in data or "end_time" in data
 
-    if has_start or has_end or current_challenge:
+    if has_start or has_end:
         default_start = current_challenge.start_time_seconds if current_challenge else 0
         default_end = current_challenge.end_time_seconds if current_challenge else 0
 
@@ -256,10 +256,15 @@ def validate_challenge_update_payload(data: Any, current_challenge: Any = None) 
             return False, "O tempo final deve ser maior que o tempo inicial.", None, 422
 
         duration = end_time - start_time
-        if duration < 10:
-            return False, "A duração do clipe deve ser de no mínimo 10 segundos", None, 422
-        if duration > 15:
-            return False, "A duração do clipe deve ser de no máximo 15 segundos", None, 422
+        if duration < 5:
+            return False, "A duração do clipe deve ser de no mínimo 5 segundos.", None, 422
+        if duration > 30:
+            return (
+                False,
+                "A duração do clipe deve ser de no máximo 30 segundos (clipes curtos recomendados de 10 a 15 segundos).",
+                None,
+                422,
+            )
 
         clean_data["start_time_seconds"] = start_time
         clean_data["end_time_seconds"] = end_time

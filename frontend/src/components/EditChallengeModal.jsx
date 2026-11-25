@@ -93,7 +93,7 @@ export default function EditChallengeModal({
 
   if (!isOpen || !challenge) return null;
 
-  // Cálculo e validação em tempo real da duração (Regra pedagógica estrita de 10 a 15 segundos)
+  // Cálculo e validação em tempo real da duração (Consistente com criação: 5s a 30s, recomendado 10s a 15s - SCRUM-192)
   const numStart = startTime === '' ? null : Number(startTime);
   const numEnd = endTime === '' ? null : Number(endTime);
   const hasTimes = numStart !== null && numEnd !== null && !isNaN(numStart) && !isNaN(numEnd);
@@ -105,20 +105,20 @@ export default function EditChallengeModal({
       durationStatus = { type: 'error', message: 'O tempo inicial não pode ser negativo.' };
     } else if (numEnd <= numStart) {
       durationStatus = { type: 'error', message: 'O tempo final deve ser maior que o tempo inicial.' };
-    } else if (duration < 10) {
+    } else if (duration < 5) {
       durationStatus = {
         type: 'error',
-        message: `A duração do clipe deve ser de no mínimo 10 segundos (atual: ${duration}s).`,
+        message: `Duração de ${duration}s muito curta. Mínimo permitido: 5 segundos.`,
       };
-    } else if (duration > 15) {
+    } else if (duration > 30) {
       durationStatus = {
         type: 'error',
-        message: `A duração do clipe deve ser de no máximo 15 segundos (atual: ${duration}s).`,
+        message: `Duração de ${duration}s muito longa. Máximo permitido: 30 segundos.`,
       };
     } else {
       durationStatus = {
         type: 'success',
-        message: `Duração ideal de ${duration}s (dentro da janela recomendada de 10 a 15 segundos).`,
+        message: `Duração: ${duration}s (Ideal para ditado: recomendado entre 10s e 15s).`,
       };
     }
   }
@@ -152,7 +152,7 @@ export default function EditChallengeModal({
       return;
     }
 
-    // Validação 3: Tempos e Duração (Janela de 10s a 15s)
+    // Validação 3: Tempos e Duração (5s a 30s, consistente com CreateChallengeModal - SCRUM-192)
     if (startTime === '' || endTime === '') {
       setClientError('Informe os segundos de início e término do trecho do vídeo.');
       return;
@@ -169,12 +169,12 @@ export default function EditChallengeModal({
       setClientError('O tempo final deve ser maior que o tempo inicial.');
       return;
     }
-    if (duration < 10) {
-      setClientError('A duração do clipe deve ser de no mínimo 10 segundos.');
+    if (duration < 5) {
+      setClientError('A duração do clipe deve ser de no mínimo 5 segundos.');
       return;
     }
-    if (duration > 15) {
-      setClientError('A duração do clipe deve ser de no máximo 15 segundos.');
+    if (duration > 30) {
+      setClientError('A duração do clipe deve ser de no máximo 30 segundos.');
       return;
     }
 
@@ -245,7 +245,7 @@ export default function EditChallengeModal({
                 Editar Desafio
               </h3>
               <p className="text-xs text-slate-400">
-                Ajustando registro #{challenge.id} • Janela pedagógica: 10s a 15s
+                Ajustando registro #{challenge.id} • Duração permitida: 5s a 30s (recomendado: 10s a 15s)
               </p>
             </div>
           </div>
@@ -320,7 +320,7 @@ export default function EditChallengeModal({
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
                 <Clock className="w-3.5 h-3.5 text-indigo-600" />
-                <span>Recorte Temporal (Janela de 10 a 15 segundos)</span>
+                <span>Recorte Temporal (5s a 30s • Recomendado: 10s a 15s)</span>
               </span>
               {previewEmbedUrl && (
                 <button
