@@ -136,42 +136,58 @@ class TestChallengePayloadValidation:
 from app.services.validators import validate_challenge_update_payload
 
 class TestChallengeUpdatePayloadValidation:
-    """Testes unitários para a validação de atualização de desafios (SCRUM-88 / US-88)."""
+    """Testes unitários para a validação de atualização de desafios (SCRUM-88 / US-88 / SCRUM-192)."""
 
-    def test_valid_update_duration_between_10_and_15_seconds(self):
-        payload = {
-            "start_time_seconds": 12,
-            "end_time_seconds": 24,
-            "title": "Novo Título",
-            "transcript_official": "Novo gabarito oficial válido"
-        }
-        is_valid, err, clean, code = validate_challenge_update_payload(payload)
+    def test_valid_update_duration_between_5_and_30_seconds(self):
+        for start_s, end_s in [(12, 24), (10, 17), (10, 30)]:
+            payload = {
+                "start_time_seconds": start_s,
+                "end_time_seconds": end_s,
+                "title": "Novo Título",
+                "transcript_official": "Novo gabarito oficial válido"
+            }
+            is_valid, err, clean, code = validate_challenge_update_payload(payload)
+            assert is_valid is True
+            assert err is None
+            assert code == 200
+            assert clean["start_time_seconds"] == start_s
+            assert clean["end_time_seconds"] == end_s
+            assert clean["title"] == "Novo Título"
+
+    def test_partial_update_without_times_does_not_revalidate_duration(self):
+        """SCRUM-192: Atualização parcial (title / is_active) não deve bloquear desafios existentes."""
+        class DummyChallenge:
+            start_time_seconds = 10
+            end_time_seconds = 30  # 20s
+
+        is_valid, err, clean, code = validate_challenge_update_payload(
+            {"title": "Título Editado", "is_active": False},
+            current_challenge=DummyChallenge(),
+        )
         assert is_valid is True
         assert err is None
         assert code == 200
-        assert clean["start_time_seconds"] == 12
-        assert clean["end_time_seconds"] == 24
-        assert clean["title"] == "Novo Título"
+        assert clean == {"title": "Título Editado", "is_active": False}
 
-    def test_update_reject_duration_less_than_10_seconds(self):
+    def test_update_reject_duration_less_than_5_seconds(self):
         payload = {
             "start_time_seconds": 20,
-            "end_time_seconds": 28  # Duração 8 segundos
+            "end_time_seconds": 24  # Duração 4 segundos (< 5s)
         }
         is_valid, err, clean, code = validate_challenge_update_payload(payload)
         assert is_valid is False
         assert code == 422
-        assert "no mínimo 10 segundos" in err
+        assert "no mínimo 5 segundos" in err
 
-    def test_update_reject_duration_greater_than_15_seconds(self):
+    def test_update_reject_duration_greater_than_30_seconds(self):
         payload = {
             "start_time_seconds": 10,
-            "end_time_seconds": 26  # Duração 16 segundos
+            "end_time_seconds": 45  # Duração 35 segundos (> 30s)
         }
         is_valid, err, clean, code = validate_challenge_update_payload(payload)
         assert is_valid is False
         assert code == 422
-        assert "no máximo 15 segundos" in err
+        assert "no máximo 30 segundos" in err
 
     def test_update_reject_empty_transcript_or_greater_than_500(self):
         # Vazio

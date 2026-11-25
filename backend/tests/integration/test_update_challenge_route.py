@@ -93,44 +93,104 @@ class TestUpdateChallengeRoute:
         assert data["duration"] == 13
         assert "start=15&end=28" in data["embed_url"]
 
-    def test_scenario_3_reject_duration_less_than_10_seconds(self, client, auth_headers, sample_challenge):
+    def test_scenario_3_reject_duration_less_than_5_seconds(self, client, auth_headers, sample_challenge):
         """
-        Cenário 3 BDD (SCRUM-88):
-        Rejeição de atualização que resulte em corte inferior a 10 segundos (30s a 36s = 6 segundos).
-        Retorna status 422 Unprocessable Entity e mensagem pedagógica apropriada.
+        Cenário 3 BDD (SCRUM-88 / SCRUM-192):
+        Rejeição de atualização que resulte em corte inferior a 5 segundos (30s a 34s = 4 segundos).
+        Retorna status 422 Unprocessable Entity e mensagem apropriada.
         """
         payload = {
             "start_time_seconds": 30,
-            "end_time_seconds": 36
+            "end_time_seconds": 34
         }
 
         res = client.put(f"/api/challenges/{sample_challenge}", json=payload, headers=auth_headers)
         assert res.status_code == 422
 
         data = res.get_json()
-        assert "A duração do clipe deve ser de no mínimo 10 segundos" in data["error"]
+        assert "A duração do clipe deve ser de no mínimo 5 segundos" in data["error"]
 
         # Garante que os dados originais no banco não foram alterados
         c_db = db.session.get(Challenge, sample_challenge)
         assert c_db.start_time_seconds == 10
         assert c_db.end_time_seconds == 22
 
-    def test_scenario_4_reject_duration_greater_than_15_seconds(self, client, auth_headers, sample_challenge):
+    def test_scenario_4_reject_duration_greater_than_30_seconds(self, client, auth_headers, sample_challenge):
         """
-        Cenário 4 BDD (SCRUM-88):
-        Rejeição de atualização que resulte em corte superior a 15 segundos (0s a 20s = 20 segundos).
+        Cenário 4 BDD (SCRUM-88 / SCRUM-192):
+        Rejeição de atualização que resulte em corte superior a 30 segundos (0s a 35s = 35 segundos).
         Retorna status 422 Unprocessable Entity e aborta a persistência.
         """
         payload = {
             "start_time_seconds": 0,
-            "end_time_seconds": 20
+            "end_time_seconds": 35
         }
 
         res = client.put(f"/api/challenges/{sample_challenge}", json=payload, headers=auth_headers)
         assert res.status_code == 422
 
         data = res.get_json()
-        assert "A duração do clipe deve ser de no máximo 15 segundos" in data["error"]
+        assert "A duração do clipe deve ser de no máximo 30 segundos" in data["error"]
+
+    def test_scrum192_regression_edit_challenge_with_5_to_9s_or_16_to_30s_duration(
+        self, client, auth_headers
+    ):
+        """
+        Teste de Regressão (SCRUM-192):
+        Dado que sou um administrador autenticado e existe um desafio cadastrado com duração de 20s (ou 7s)
+        Quando eu enviar uma requisição PUT para /api/challenges/<id> alterando apenas title ou is_active
+        (ou enviando o payload completo do modal mantendo a duração entre 5s e 30s)
+        Então o servidor deve retornar HTTP 200 OK e persistir a alteração no banco de dados.
+        """
+        # 1. Cria desafio válido com 20s de duração via POST /api/challenges
+        create_res = client.post(
+            "/api/challenges",
+            json={
+                "title": "Desafio de 20 Segundos",
+                "video_url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+                "start_time_seconds": 10,
+                "end_time_seconds": 30,
+                "difficulty": "medium",
+                "accent": "American",
+                "transcript_official": "Twenty seconds clip transcript official.",
+            },
+            headers=auth_headers,
+        )
+        assert create_res.status_code == 201
+        cid_20s = create_res.get_json()["challenge"]["id"]
+
+        # 2. Atualização parcial alterando apenas title e is_active (sem enviar start/end_time_seconds)
+        put_partial = client.put(
+            f"/api/challenges/{cid_20s}",
+            json={"title": "Novo título 20s", "is_active": False},
+            headers=auth_headers,
+        )
+        assert put_partial.status_code == 200
+        updated_data = put_partial.get_json()["challenge"]
+        assert updated_data["title"] == "Novo título 20s"
+        assert updated_data["is_active"] is False
+        assert updated_data["duration"] == 20
+
+        # 3. Atualização completa (como enviada pelo EditChallengeModal) com duração de 7s (entre 5s e 9s)
+        put_full_7s = client.put(
+            f"/api/challenges/{cid_20s}",
+            json={
+                "title": "Desafio Ajustado para 7s",
+                "video_url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+                "start_time_seconds": 5,
+                "end_time_seconds": 12,
+                "difficulty": "easy",
+                "accent": "British",
+                "transcript_official": "Seven seconds clip transcript.",
+                "is_active": True,
+            },
+            headers=auth_headers,
+        )
+        assert put_full_7s.status_code == 200
+        data_7s = put_full_7s.get_json()["challenge"]
+        assert data_7s["title"] == "Desafio Ajustado para 7s"
+        assert data_7s["duration"] == 7
+        assert data_7s["is_active"] is True
 
     def test_scenario_5_edit_nonexistent_challenge_returns_404(self, client, auth_headers):
         """
