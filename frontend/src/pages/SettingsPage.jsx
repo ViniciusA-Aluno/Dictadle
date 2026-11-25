@@ -143,7 +143,7 @@ export default function SettingsPage({
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
       {/* Cabeçalho */}
-      <header className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between">
+      <header className="bg-white border-b border-slate-200 px-4 sm:px-6 py-3.5 sm:py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <button
             onClick={onBack}
@@ -166,9 +166,9 @@ export default function SettingsPage({
         </button>
       </header>
 
-      <main className="max-w-2xl mx-auto w-full px-4 py-8 space-y-6">
+      <main className="max-w-2xl mx-auto w-full px-3 sm:px-4 py-4 sm:py-8 space-y-4 sm:space-y-6">
         {/* SEÇÃO 1: DADOS CADASTRAIS */}
-        <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+        <div className="bg-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-slate-200 shadow-sm space-y-4">
           <div className="flex items-center gap-2.5 pb-2 border-b border-slate-100">
             <User className="w-5 h-5 text-indigo-600" />
             <h2 className="text-base font-bold text-slate-800">Dados Cadastrais</h2>

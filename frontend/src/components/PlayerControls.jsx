@@ -127,14 +127,14 @@ export default function PlayerControls({
 
       {/* Linha de Controles e Atalhos */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-1 border-t border-slate-800/80">
-        {/* Botões de Ação */}
+        {/* Botões de Ação com Área Mínima de Toque Touch (44x44px - SCRUM-179/181) */}
         <div className="flex items-center gap-2">
           {/* Botão Play / Pause Principal */}
           <button
             type="button"
             onClick={onTogglePlay}
             disabled={!isReady}
-            className="flex items-center justify-center w-10 h-10 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:scale-95 disabled:bg-slate-800 disabled:text-slate-600 text-white font-bold transition shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 focus:ring-offset-slate-900"
+            className="flex items-center justify-center w-11 h-11 min-w-[44px] min-h-[44px] rounded-xl bg-indigo-600 hover:bg-indigo-500 active:scale-95 disabled:bg-slate-800 disabled:text-slate-600 text-white font-bold transition shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 focus:ring-offset-slate-900"
             title={isPlaying ? 'Pausar clipe (Ctrl + Espaço)' : 'Reproduzir clipe (Ctrl + Espaço)'}
             aria-label={isPlaying ? 'Pausar clipe de áudio' : 'Reproduzir clipe de áudio'}
             aria-pressed={isPlaying}
@@ -153,7 +153,7 @@ export default function PlayerControls({
             type="button"
             onClick={() => onRewind && onRewind(5)}
             disabled={!isReady}
-            className="flex items-center gap-1 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 disabled:opacity-50 text-slate-200 text-xs font-semibold border border-slate-700 transition focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 focus:ring-offset-slate-900"
+            className="flex items-center justify-center gap-1 min-h-[44px] min-w-[44px] px-3.5 py-2.5 sm:py-2 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 disabled:opacity-50 text-slate-200 text-xs font-semibold border border-slate-700 transition focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 focus:ring-offset-slate-900"
             title="Voltar 5 segundos (Ctrl + Seta Esquerda)"
             aria-label="Voltar 5 segundos no áudio"
           >
@@ -166,7 +166,7 @@ export default function PlayerControls({
             type="button"
             onClick={onReplay}
             disabled={!isReady}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 disabled:opacity-50 text-slate-200 text-xs font-semibold border border-slate-700 transition focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 focus:ring-offset-slate-900"
+            className="flex items-center justify-center gap-1.5 min-h-[44px] min-w-[44px] px-3.5 py-2.5 sm:py-2 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 disabled:opacity-50 text-slate-200 text-xs font-semibold border border-slate-700 transition focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 focus:ring-offset-slate-900"
             title="Reiniciar o recorte do início (Ctrl + Seta Abaixo)"
             aria-label="Reiniciar o clipe de áudio do início"
           >
@@ -177,7 +177,7 @@ export default function PlayerControls({
 
         {/* Dicas de Atalhos do Driver DA-USA-I1-003 */}
         <div
-          className="flex items-center gap-2 text-[11px] text-slate-400 bg-slate-800/60 px-3 py-1.5 rounded-xl border border-slate-700/60 font-medium"
+          className="flex flex-wrap items-center justify-center sm:justify-start gap-2 text-[11px] text-slate-400 bg-slate-800/60 px-3 py-1.5 rounded-xl border border-slate-700/60 font-medium"
           aria-label="Atalhos de teclado disponíveis: Ctrl mais Espaço para Play/Pause, Ctrl mais Seta Esquerda para voltar 5 segundos"
         >
           <Command className="w-3.5 h-3.5 text-indigo-400 hidden sm:inline-block" />

@@ -209,7 +209,7 @@ export default function ChallengeResolutionPage({ currentUser, onNavigateToSetti
       {/* Cabeçalho Superior */}
       <header
         role="banner"
-        className="bg-white border-b border-slate-200 px-4 sm:px-6 py-3.5 flex items-center justify-between sticky top-0 z-10 shadow-xs"
+        className="bg-white border-b border-slate-200 px-3.5 sm:px-6 py-3 sm:py-3.5 flex items-center justify-between sticky top-0 z-10 shadow-xs"
       >
         <div className="flex items-center gap-3">
           <div className="bg-indigo-600 text-white p-2 rounded-xl" aria-hidden="true">
@@ -266,7 +266,7 @@ export default function ChallengeResolutionPage({ currentUser, onNavigateToSetti
       {/* Conteúdo Principal */}
       <main
         role="main"
-        className="flex-1 max-w-4xl mx-auto w-full px-4 py-6 sm:py-8 space-y-6"
+        className="flex-1 max-w-4xl mx-auto w-full px-3 sm:px-4 py-4 sm:py-8 space-y-4 sm:space-y-6"
       >
         {/* Banner Informativo do Desafio com Metadados e Navegação */}
         <section
@@ -298,7 +298,7 @@ export default function ChallengeResolutionPage({ currentUser, onNavigateToSetti
               </div>
             )}
 
-            {/* Navegador entre Desafios */}
+            {/* Navegador entre Desafios com Botões Touch Acessíveis (SCRUM-178/181) */}
             {challengesList.length > 1 && (
               <nav
                 aria-label="Navegação entre desafios"
@@ -314,21 +314,21 @@ export default function ChallengeResolutionPage({ currentUser, onNavigateToSetti
                 <button
                   type="button"
                   onClick={handlePrevChallenge}
-                  className="p-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="min-w-[44px] min-h-[44px] flex items-center justify-center p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition focus:outline-none focus:ring-2 focus:ring-indigo-500 active:scale-95"
                   title="Desafio anterior"
                   aria-label="Ir para o desafio anterior"
                 >
-                  <ChevronLeft className="w-3.5 h-3.5" aria-hidden="true" />
+                  <ChevronLeft className="w-4 h-4" aria-hidden="true" />
                 </button>
                 <button
                   type="button"
                   onClick={handleNextChallenge}
-                  className="flex items-center gap-1 px-2 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-[11px] transition focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="min-h-[44px] flex items-center gap-1 px-3 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs transition focus:outline-none focus:ring-2 focus:ring-indigo-500 active:scale-95"
                   title="Próximo desafio"
                   aria-label="Ir para o próximo desafio"
                 >
                   <span>Próximo</span>
-                  <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
+                  <ChevronRight className="w-4 h-4" aria-hidden="true" />
                 </button>
               </nav>
             )}
