@@ -263,167 +263,164 @@ export default function ChallengeResolutionPage({ currentUser, onNavigateToSetti
         </div>
       </header>
 
-      {/* Conteúdo Principal */}
+      {/* Conteúdo Principal: Layout em 2 colunas no desktop (Player ampliado à esquerda, Input à direita) */}
       <main
         role="main"
-        className="flex-1 max-w-4xl mx-auto w-full px-3 sm:px-4 py-4 sm:py-8 space-y-4 sm:space-y-6"
+        className="flex-1 max-w-7xl mx-auto w-full px-3 sm:px-6 py-3 sm:py-5 space-y-4"
       >
-        {/* Banner Informativo do Desafio com Metadados e Navegação */}
-        <section
-          aria-label="Informações do desafio"
-          className="flex flex-col sm:flex-row sm:items-center justify-between bg-white px-4 py-3 rounded-2xl border border-slate-200 text-xs text-slate-600 gap-3 shadow-xs"
-        >
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-indigo-600 flex-shrink-0" aria-hidden="true" />
-            <span className="font-medium">
-              {challenge ? challenge.title : 'Ouça com atenção e digite exatamente o que os falantes disserem.'}
-            </span>
-          </div>
-
-          <div className="flex items-center gap-3">
-            {challenge && (
-              <div
-                className="flex items-center gap-2 font-mono text-[11px]"
-                aria-label={`Dificuldade ${challenge.difficulty}, Sotaque ${challenge.accent}, Duração ${challenge.duration} segundos`}
-              >
-                <span className="px-2 py-0.5 bg-amber-50 text-amber-700 font-bold rounded-md uppercase">
-                  {challenge.difficulty}
-                </span>
-                <span className="px-2 py-0.5 bg-slate-100 text-slate-700 font-semibold rounded-md">
-                  {challenge.accent}
-                </span>
-                <span className="text-slate-400">
-                  {challenge.duration}s
+        {/* Grid Principal: Vídeo/Player à esquerda e Input à direita com altura alinhada */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6 items-stretch">
+          {/* Coluna Esquerda: Título, Metadados, Player de Vídeo e Controles */}
+          <div className="lg:col-span-7 xl:col-span-8 flex flex-col space-y-2.5">
+            {/* Banner Informativo do Desafio com Metadados e Navegação */}
+            <section
+              aria-label="Informações do desafio"
+              className="flex flex-col sm:flex-row sm:items-center justify-between bg-white px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-600 gap-2 shadow-xs"
+            >
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-indigo-600 flex-shrink-0" aria-hidden="true" />
+                <span className="font-medium">
+                  {challenge ? challenge.title : 'Ouça com atenção e digite exatamente o que os falantes disserem.'}
                 </span>
               </div>
-            )}
 
-            {/* Navegador entre Desafios com Botões Touch Acessíveis (SCRUM-178/181) */}
-            {challengesList.length > 1 && (
-              <nav
-                aria-label="Navegação entre desafios"
-                className="flex items-center gap-1.5 border-l border-slate-200 pl-3"
+              <div className="flex items-center gap-3">
+                {challenge && (
+                  <div
+                    className="flex items-center gap-2 font-mono text-[11px]"
+                    aria-label={`Dificuldade ${challenge.difficulty}, Sotaque ${challenge.accent}, Duração ${challenge.duration} segundos`}
+                  >
+                    <span className="px-2 py-0.5 bg-amber-50 text-amber-700 font-bold rounded-md uppercase">
+                      {challenge.difficulty}
+                    </span>
+                    <span className="px-2 py-0.5 bg-slate-100 text-slate-700 font-semibold rounded-md">
+                      {challenge.accent}
+                    </span>
+                    <span className="text-slate-400">
+                      {challenge.duration}s
+                    </span>
+                  </div>
+                )}
+
+                {/* Navegador entre Desafios com Botões Touch Acessíveis (SCRUM-178/181) */}
+                {challengesList.length > 1 && (
+                  <nav
+                    aria-label="Navegação entre desafios"
+                    className="flex items-center gap-1.5 border-l border-slate-200 pl-3"
+                  >
+                    <span
+                      className="text-[11px] font-semibold text-slate-500"
+                      aria-live="polite"
+                      aria-atomic="true"
+                    >
+                      {currentIndex + 1} de {challengesList.length}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handlePrevChallenge}
+                      className="min-w-[44px] min-h-[44px] flex items-center justify-center p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition focus:outline-none focus:ring-2 focus:ring-indigo-500 active:scale-95"
+                      title="Desafio anterior"
+                      aria-label="Ir para o desafio anterior"
+                    >
+                      <ChevronLeft className="w-4 h-4" aria-hidden="true" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleNextChallenge}
+                      className="min-h-[44px] flex items-center gap-1 px-3 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs transition focus:outline-none focus:ring-2 focus:ring-indigo-500 active:scale-95"
+                      title="Próximo desafio"
+                      aria-label="Ir para o próximo desafio"
+                    >
+                      <span>Próximo</span>
+                      <ChevronRight className="w-4 h-4" aria-hidden="true" />
+                    </button>
+                  </nav>
+                )}
+              </div>
+            </section>
+
+            {/* Zona 1: Player de Vídeo e Áudio Oficial (US-107 / SCRUM-149 / SCRUM-150) */}
+            {isLoadingChallenge ? (
+              <div
+                role="status"
+                aria-live="polite"
+                className="aspect-video w-full bg-slate-900 rounded-3xl border border-slate-800 flex flex-col items-center justify-center text-slate-400 gap-3"
               >
-                <span
-                  className="text-[11px] font-semibold text-slate-500"
-                  aria-live="polite"
-                  aria-atomic="true"
-                >
-                  {currentIndex + 1} de {challengesList.length}
-                </span>
+                <Loader2 className="w-8 h-8 animate-spin text-indigo-500" aria-hidden="true" />
+                <p className="text-xs font-medium">Buscando clipe do desafio...</p>
+              </div>
+            ) : challengeError ? (
+              <div
+                role="alert"
+                className="aspect-video w-full bg-slate-900 rounded-3xl border border-slate-800 flex flex-col items-center justify-center text-center p-6 text-slate-300"
+              >
+                <AlertCircle className="w-10 h-10 text-rose-500 mb-3" aria-hidden="true" />
+                <h3 className="text-white font-bold text-base">Falha ao carregar clipe</h3>
+                <p className="text-xs text-slate-400 mt-1 max-w-sm">{challengeError}</p>
                 <button
-                  type="button"
-                  onClick={handlePrevChallenge}
-                  className="min-w-[44px] min-h-[44px] flex items-center justify-center p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition focus:outline-none focus:ring-2 focus:ring-indigo-500 active:scale-95"
-                  title="Desafio anterior"
-                  aria-label="Ir para o desafio anterior"
+                  onClick={loadChallengeData}
+                  aria-label="Tentar carregar o clipe novamente"
+                  className="mt-4 flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl transition focus:outline-none focus:ring-2 focus:ring-indigo-400"
                 >
-                  <ChevronLeft className="w-4 h-4" aria-hidden="true" />
+                  <RefreshCw className="w-3.5 h-3.5" aria-hidden="true" />
+                  <span>Tentar novamente</span>
                 </button>
+              </div>
+            ) : challenge ? (
+              <ChallengeVideoPlayer
+                videoId={challenge.youtube_video_id}
+                startTime={challenge.start_time_seconds}
+                endTime={challenge.end_time_seconds}
+                title={challenge.title}
+                playerControlsRef={playerControlsRef}
+                onNavigateToCatalog={() => navigate('/dashboard')}
+              />
+            ) : null}
+          </div>
+
+          {/* Coluna Direita: Campo de Input de Respostas (Comprido verticalmente para acompanhar a altura do player) */}
+          <div className="lg:col-span-5 xl:col-span-4 flex flex-col h-full min-h-[360px] lg:min-h-0">
+            <AnswerInputBox
+              onSubmit={handleAnswerSubmit}
+              isSubmitting={isSubmitting}
+              submitError={submitError}
+              autoFocus={true}
+              inputRef={answerTextareaRef}
+              placeholder="Ouça o áudio e digite o que compreendeu... Pressione Ctrl+Enter para enviar."
+            />
+          </div>
+        </div>
+
+        {/* Zona 3: Feedback Visual Comparativo da Correção (SCRUM-94 / SCRUM-189) */}
+        {submittedAnswer && (
+          <div className="space-y-3 pt-2">
+            <CorrectionFeedbackPanel
+              tokens={correctionResult?.diff || null}
+              studentTokens={correctionResult?.student_tokens || null}
+              officialTokens={correctionResult?.official_tokens || null}
+              transcriptOfficial={officialTranscript || ''}
+              accuracyPercentage={correctionResult?.accuracy_percentage ?? null}
+              wordsCorrect={correctionResult?.words_correct ?? null}
+              wordsTotal={correctionResult?.words_total ?? null}
+              isPerfect={Boolean(correctionResult?.is_perfect)}
+              onReset={handleReset}
+            />
+
+            {challengesList.length > 1 && (
+              <div className="flex justify-end pt-2">
                 <button
                   type="button"
                   onClick={handleNextChallenge}
-                  className="min-h-[44px] flex items-center gap-1 px-3 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs transition focus:outline-none focus:ring-2 focus:ring-indigo-500 active:scale-95"
-                  title="Próximo desafio"
-                  aria-label="Ir para o próximo desafio"
+                  aria-label="Ir para o próximo desafio após ver o feedback"
+                  className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl transition shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
-                  <span>Próximo</span>
+                  <span>Ir para o Próximo Desafio</span>
                   <ChevronRight className="w-4 h-4" aria-hidden="true" />
                 </button>
-              </nav>
+              </div>
             )}
           </div>
-        </section>
-
-        {/* Zona 1: Player de Vídeo e Áudio Oficial (US-107 / SCRUM-149 / SCRUM-150) */}
-        {isLoadingChallenge ? (
-          <div
-            role="status"
-            aria-live="polite"
-            className="aspect-video w-full bg-slate-900 rounded-3xl border border-slate-800 flex flex-col items-center justify-center text-slate-400 gap-3"
-          >
-            <Loader2 className="w-8 h-8 animate-spin text-indigo-500" aria-hidden="true" />
-            <p className="text-xs font-medium">Buscando clipe do desafio...</p>
-          </div>
-        ) : challengeError ? (
-          <div
-            role="alert"
-            className="aspect-video w-full bg-slate-900 rounded-3xl border border-slate-800 flex flex-col items-center justify-center text-center p-6 text-slate-300"
-          >
-            <AlertCircle className="w-10 h-10 text-rose-500 mb-3" aria-hidden="true" />
-            <h3 className="text-white font-bold text-base">Falha ao carregar clipe</h3>
-            <p className="text-xs text-slate-400 mt-1 max-w-sm">{challengeError}</p>
-            <button
-              onClick={loadChallengeData}
-              aria-label="Tentar carregar o clipe novamente"
-              className="mt-4 flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl transition focus:outline-none focus:ring-2 focus:ring-indigo-400"
-            >
-              <RefreshCw className="w-3.5 h-3.5" aria-hidden="true" />
-              <span>Tentar novamente</span>
-            </button>
-          </div>
-        ) : challenge ? (
-          <ChallengeVideoPlayer
-            videoId={challenge.youtube_video_id}
-            startTime={challenge.start_time_seconds}
-            endTime={challenge.end_time_seconds}
-            title={challenge.title}
-            playerControlsRef={playerControlsRef}
-            onNavigateToCatalog={() => navigate('/dashboard')}
-          />
-        ) : null}
-
-        {/* Zona 2: Campo de Input de Respostas (US-92 / SCRUM-20) */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">
-              Sua Transcrição
-            </h3>
-            <span className="text-[11px] text-slate-400 hidden sm:inline" aria-hidden="true">
-              Dica: Use <kbd className="px-1 py-0.5 bg-slate-200/80 rounded font-mono text-[10px]">Ctrl+Espaço</kbd> para pausar o vídeo sem sair do texto
-            </span>
-          </div>
-
-          <AnswerInputBox
-            onSubmit={handleAnswerSubmit}
-            isSubmitting={isSubmitting}
-            submitError={submitError}
-            autoFocus={true}
-            inputRef={answerTextareaRef}
-            placeholder="Ouça o áudio e digite o que compreendeu... Pressione Ctrl+Enter para enviar."
-          />
-
-          {/* Zona 3: Feedback Visual Comparativo da Correção (SCRUM-94 / SCRUM-189) */}
-          {submittedAnswer && (
-            <div className="space-y-3">
-              <CorrectionFeedbackPanel
-                tokens={correctionResult?.diff || null}
-                studentTokens={correctionResult?.student_tokens || null}
-                officialTokens={correctionResult?.official_tokens || null}
-                transcriptOfficial={officialTranscript || ''}
-                accuracyPercentage={correctionResult?.accuracy_percentage ?? null}
-                wordsCorrect={correctionResult?.words_correct ?? null}
-                wordsTotal={correctionResult?.words_total ?? null}
-                isPerfect={Boolean(correctionResult?.is_perfect)}
-                onReset={handleReset}
-              />
-
-              {challengesList.length > 1 && (
-                <div className="flex justify-end pt-2">
-                  <button
-                    type="button"
-                    onClick={handleNextChallenge}
-                    aria-label="Ir para o próximo desafio após ver o feedback"
-                    className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl transition shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  >
-                    <span>Ir para o Próximo Desafio</span>
-                    <ChevronRight className="w-4 h-4" aria-hidden="true" />
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+        )}
       </main>
     </div>
   );

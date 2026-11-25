@@ -78,7 +78,7 @@ export default function ChallengeVideoPlayer({
     <div
       role="region"
       aria-label={`Reprodutor de vídeo: ${title}`}
-      className="w-full space-y-3"
+      className="w-full space-y-2"
     >
       {/* Container de Reprodução de Vídeo (16:9) */}
       <div className="relative aspect-video w-full bg-black rounded-3xl overflow-hidden border border-slate-800 shadow-xl group">

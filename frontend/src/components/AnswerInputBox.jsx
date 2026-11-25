@@ -96,15 +96,25 @@ export default function AnswerInputBox({
   };
 
   return (
-    <div className="w-full bg-white rounded-2xl border border-slate-200 shadow-sm p-4 transition-all focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-100">
-      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+    <div className="w-full h-full flex flex-col bg-white rounded-2xl border-2 border-indigo-200/90 shadow-md p-4 transition-all focus-within:border-indigo-600 focus-within:ring-4 focus-within:ring-indigo-100/70">
+      <form onSubmit={handleSubmit} className="flex flex-col flex-1 h-full gap-3 justify-between">
+        {/* Cabeçalho de Destaque da Área de Resposta */}
+        <div className="flex items-center justify-between pb-1 border-b border-slate-100/80 shrink-0">
+          <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700">
+            <span className="w-2 h-2 rounded-full bg-indigo-600 animate-pulse" />
+            <span>Sua Resposta</span>
+          </div>
+          <span className="text-[11px] text-slate-400 hidden sm:inline">
+            Ouça o áudio e digite exatamente o que você escutar
+          </span>
+        </div>
         {/* Rótulo Acessível para Leitores de Tela (WCAG 2.1) */}
         <label htmlFor="transcription-textarea" className="sr-only">
           Campo de transcrição do ditado
         </label>
 
-        {/* Campo de Texto */}
-        <div className="relative">
+        {/* Campo de Texto que preenche a altura disponível */}
+        <div className="relative flex-1 flex flex-col min-h-[140px]">
           <textarea
             id="transcription-textarea"
             ref={textareaRef}
@@ -117,18 +127,18 @@ export default function AnswerInputBox({
             autoComplete="off"
             autoCorrect="off"
             autoCapitalize="off"
-            rows={3}
+            rows={4}
             placeholder={placeholder}
             aria-label="Campo de transcrição do ditado"
             aria-describedby="transcription-char-counter transcription-shortcut-hint"
-            className={`w-full resize-none text-slate-800 placeholder-slate-400 text-sm sm:text-base outline-none bg-transparent transition-opacity leading-relaxed ${
+            className={`w-full flex-1 resize-none text-slate-800 placeholder-slate-400 text-sm sm:text-base outline-none bg-transparent transition-opacity leading-relaxed ${
               isSubmitting || disabled ? 'opacity-50 cursor-not-allowed' : ''
             }`}
           />
         </div>
 
         {/* Rodapé do Input: Contador e Ações (SCRUM-179: Mobile-First e Teclado Virtual) */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-t border-slate-100 pt-3 gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-t border-slate-100 pt-3 gap-3 shrink-0 mt-auto">
           {/* Lado Esquerdo: Botão Limpar e Contador de Caracteres */}
           <div className="flex items-center justify-between sm:justify-start gap-3 w-full sm:w-auto">
             {value.length > 0 && !isSubmitting && !disabled && (
