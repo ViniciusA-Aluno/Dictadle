@@ -27,6 +27,7 @@ import {
   Pencil,
 } from 'lucide-react';
 import EditChallengeModal from './EditChallengeModal';
+import { clearChallengesMemoryCache } from '../pages/ChallengeResolutionPage';
 
 /**
  * Componente ChallengesManager (SCRUM-138 / US-90)
@@ -764,6 +765,7 @@ export default function ChallengesManager({
         challenge={challengeToEdit}
         onClose={() => setChallengeToEdit(null)}
         onSuccess={(updated) => {
+          clearChallengesMemoryCache();
           fetchChallenges(true);
           setChallengeToEdit(null);
           setSuccessToast('Desafio atualizado com sucesso!');

@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import StudentDashboard from './pages/StudentDashboard';
-import ChallengeResolutionPage from './pages/ChallengeResolutionPage';
+import ChallengeResolutionPage, { clearChallengesMemoryCache } from './pages/ChallengeResolutionPage';
 import AdminUsersPage from './pages/AdminUsersPage';
 import SettingsPage from './pages/SettingsPage';
 import DeleteAccountPage from './pages/DeleteAccountPage';
@@ -35,6 +35,7 @@ function AppRoutes() {
           // Token inválido, expirado ou erro de autenticação: limpa a sessão local
           setAuthToken(null);
           setCurrentUser(null);
+          clearChallengesMemoryCache();
         })
         .finally(() => {
           setIsInitializing(false);
@@ -45,6 +46,7 @@ function AppRoutes() {
   }, []);
 
   const handleLoginSuccess = (user, token) => {
+    clearChallengesMemoryCache();
     setCurrentUser(user);
     // Redireciona para a página originalmente requisitada se houver, ou para a home do perfil
     const destination = location.state?.from?.pathname || (user.role === 'admin' ? '/admin' : '/challenge');
@@ -55,6 +57,7 @@ function AppRoutes() {
     setAuthToken(null);
     setCurrentUser(null);
     setLoginSuccessNotice(null);
+    clearChallengesMemoryCache();
     navigate('/login');
   };
 
@@ -62,6 +65,7 @@ function AppRoutes() {
     setAuthToken(null);
     setCurrentUser(null);
     setLoginSuccessNotice('Sua conta foi excluída com sucesso.');
+    clearChallengesMemoryCache();
     navigate('/login');
   };
 
