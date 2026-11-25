@@ -4,7 +4,6 @@ import {
   Settings,
   LogOut,
   Sparkles,
-  Volume2,
   Loader2,
   AlertCircle,
   RefreshCw,
@@ -12,6 +11,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react';
+import DictadleLogo from '../components/DictadleLogo';
 import AnswerInputBox from '../components/AnswerInputBox';
 import CorrectionFeedbackPanel from '../components/CorrectionFeedbackPanel';
 import ChallengeVideoPlayer from '../components/ChallengeVideoPlayer';
@@ -211,15 +211,7 @@ export default function ChallengeResolutionPage({ currentUser, onNavigateToSetti
         role="banner"
         className="bg-white border-b border-slate-200 px-3.5 sm:px-6 py-3 sm:py-3.5 flex items-center justify-between sticky top-0 z-10 shadow-xs"
       >
-        <div className="flex items-center gap-3">
-          <div className="bg-indigo-600 text-white p-2 rounded-xl" aria-hidden="true">
-            <Volume2 className="w-5 h-5" />
-          </div>
-          <div>
-            <h1 className="font-bold text-slate-800 text-base sm:text-lg leading-tight">Dictadle</h1>
-            <p className="text-[11px] text-slate-500 font-medium">Desafio de Transcrição</p>
-          </div>
-        </div>
+        <DictadleLogo size="md" subtitle="Desafio de Transcrição" />
 
         <div className="flex items-center gap-2">
           {currentUser && (

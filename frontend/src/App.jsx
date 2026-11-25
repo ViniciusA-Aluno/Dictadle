@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
+import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import StudentDashboard from './pages/StudentDashboard';
@@ -88,7 +89,19 @@ function AppRoutes() {
 
   return (
     <Routes>
-      {/* Rotas Públicas */}
+      {/* Rota Inicial / Landing Page */}
+      <Route
+        path="/"
+        element={
+          currentUser ? (
+            <Navigate to={currentUser.role === 'admin' ? '/admin' : '/challenge'} replace />
+          ) : (
+            <LandingPage currentUser={currentUser} />
+          )
+        }
+      />
+
+      {/* Rotas Públicas de Autenticação */}
       <Route
         path="/login"
         element={
@@ -215,7 +228,7 @@ function AppRoutes() {
           currentUser ? (
             <Navigate to={currentUser.role === 'admin' ? '/admin' : '/challenge'} replace />
           ) : (
-            <Navigate to="/login" replace />
+            <Navigate to="/" replace />
           )
         }
       />

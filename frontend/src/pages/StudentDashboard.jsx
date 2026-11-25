@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { UserCheck, Settings, LogOut, Headphones, Flame, Trophy, Sparkles, Play, ShieldCheck, AlertCircle, Loader2 } from 'lucide-react';
+import { Settings, LogOut, Headphones, Flame, Trophy, Sparkles, Play, ShieldCheck, AlertCircle, Loader2 } from 'lucide-react';
+import DictadleLogo from '../components/DictadleLogo';
 import { challengeService } from '../services/api';
 
 export default function StudentDashboard({ currentUser, onNavigateToSettings, onLogout }) {
@@ -31,15 +32,7 @@ export default function StudentDashboard({ currentUser, onNavigateToSettings, on
     <div className="min-h-screen bg-slate-50 flex flex-col">
       {/* Cabeçalho */}
       <header className="bg-white border-b border-slate-200 px-4 sm:px-6 py-3.5 sm:py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="bg-indigo-600 text-white p-2 rounded-xl">
-            <UserCheck className="w-5 h-5" />
-          </div>
-          <div>
-            <h1 className="font-bold text-slate-800 text-lg">Dictadle</h1>
-            <p className="text-xs text-slate-500">Área do Estudante</p>
-          </div>
-        </div>
+        <DictadleLogo size="md" subtitle="Área do Estudante" />
 
         <div className="flex items-center gap-2">
           <button

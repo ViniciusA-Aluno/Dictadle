@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { authService, setAuthToken } from '../services/api';
+import DictadleLogo from '../components/DictadleLogo';
 import {
   Lock,
   Mail,
@@ -97,14 +98,10 @@ export default function LoginPage({ onLoginSuccess, onNavigateToRegister, initia
       <div className="bg-white p-5 sm:p-8 rounded-2xl sm:rounded-3xl border border-slate-200 shadow-xl max-w-md w-full transition-all">
         {/* Cabeçalho */}
         <div className="text-center mb-6">
-          <div className="inline-flex bg-indigo-600 text-white p-3.5 rounded-2xl mb-3 shadow-md">
-            {step === 'credentials' ? (
-              <KeyRound className="w-8 h-8" />
-            ) : (
-              <ShieldCheck className="w-8 h-8 text-emerald-300" />
-            )}
+          <div className="flex justify-center mb-4">
+            <DictadleLogo size="lg" subtitle="Desafio Diário de Listening" />
           </div>
-          <h2 className="text-2xl font-black text-slate-800 tracking-tight">
+          <h2 className="text-2xl font-black text-slate-800 tracking-tight font-display">
             {step === 'credentials' ? 'Acessar Dictadle' : 'Verificação em Duas Etapas'}
           </h2>
           <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
