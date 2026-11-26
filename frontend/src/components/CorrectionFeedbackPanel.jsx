@@ -84,14 +84,39 @@ export default function CorrectionFeedbackPanel({
     setActiveTooltipIndex((prev) => (prev === idx ? null : idx));
   };
 
+  // Prevenção de armadilhas de foco (Cenário 4 SCRUM-195): Esc fecha tooltip ativo
+  const handlePanelKeyDown = (e) => {
+    if (e.key === 'Escape' && activeTooltipIndex !== null) {
+      setActiveTooltipIndex(null);
+    }
+  };
+
+  // Resumo vocalizável automaticamente por leitores de tela (Cenário 2 SCRUM-195)
+  const incorrectWords = resolvedStudentTokens
+    .filter((t) => t.status !== 'correct')
+    .map((t) => (t.expected ? `${t.word} (esperado ${t.expected})` : `${t.word} (excedente)`));
+  const missingWords = resolvedOfficialTokens
+    .filter((t) => t.status === 'missing')
+    .map((t) => t.word);
+  const liveAnnouncement = showPerfectBanner
+    ? `Resultado da correção: ${accuracy} por cento de precisão. Parabéns, você acertou todas as ${finalTotal} palavras.`
+    : `Resultado da correção: ${accuracy} por cento de precisão, ${finalCorrect} de ${finalTotal} palavras corretas.` +
+      (incorrectWords.length > 0 ? ` Palavras incorretas: ${incorrectWords.join(', ')}.` : '') +
+      (missingWords.length > 0 ? ` Palavras omitidas: ${missingWords.join(', ')}.` : '');
+
   return (
     <section
+      onKeyDown={handlePanelKeyDown}
       className="w-full bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-sm space-y-4 transition-all"
       role="region"
       aria-label="Resultado da avaliação da transcrição"
       aria-live="polite"
       aria-atomic="true"
     >
+      {/* Região viva dedicada para anúncio imediato de pontuação e erros/omissões (SCRUM-195) */}
+      <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+        {liveAnnouncement}
+      </p>
       {/* Cabeçalho do Painel */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
         <div>

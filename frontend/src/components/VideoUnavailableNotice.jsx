@@ -9,9 +9,14 @@ import { AlertTriangle, RefreshCw, Compass } from 'lucide-react';
  */
 export default function VideoUnavailableNotice({ onRetry, onNavigateToCatalog, errorCode }) {
   return (
-    <div className="w-full aspect-video bg-slate-900 rounded-3xl border border-slate-800 shadow-lg flex flex-col items-center justify-center p-6 text-center text-slate-300">
+    <section
+      role="alert"
+      aria-live="polite"
+      aria-label="Aviso de vídeo indisponível"
+      className="w-full aspect-video bg-slate-900 rounded-3xl border border-slate-800 shadow-lg flex flex-col items-center justify-center p-6 text-center text-slate-300"
+    >
       <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center mb-4">
-        <AlertTriangle className="w-7 h-7" />
+        <AlertTriangle className="w-7 h-7" aria-hidden="true" />
       </div>
 
       <h3 className="text-white text-base sm:text-lg font-bold">
@@ -33,9 +38,10 @@ export default function VideoUnavailableNotice({ onRetry, onNavigateToCatalog, e
           <button
             type="button"
             onClick={onRetry}
-            className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-xl border border-slate-700 transition"
+            aria-label="Tentar carregar o vídeo novamente"
+            className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-xl border border-slate-700 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
           >
-            <RefreshCw className="w-3.5 h-3.5" />
+            <RefreshCw className="w-3.5 h-3.5" aria-hidden="true" />
             <span>Tentar novamente</span>
           </button>
         )}
@@ -44,13 +50,14 @@ export default function VideoUnavailableNotice({ onRetry, onNavigateToCatalog, e
           <button
             type="button"
             onClick={onNavigateToCatalog}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl transition shadow-sm"
+            aria-label="Escolher outro desafio no catálogo"
+            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl transition shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
           >
-            <Compass className="w-3.5 h-3.5" />
+            <Compass className="w-3.5 h-3.5" aria-hidden="true" />
             <span>Escolher outro desafio</span>
           </button>
         )}
       </div>
-    </div>
+    </section>
   );
 }

@@ -78,12 +78,11 @@ export default function PlayerControls({
   const accessibleValueText = `${formatTime(elapsed)} de ${formatTime(duration)}`;
 
   return (
-    <div
-      role="region"
+    <section
       aria-label="Controles de reprodução de áudio do desafio"
       className="w-full bg-slate-900/95 backdrop-blur-md border border-slate-800 rounded-2xl p-2.5 sm:px-4 sm:py-3 text-white shadow-xl transition-all"
     >
-      {/* Região viva oculta para leitores de tela anunciarem o estado da mídia (DA-USA-I1-001) */}
+      {/* Região viva oculta para leitores de tela anunciarem o estado da mídia (DA-USA-I1-001 / SCRUM-195) */}
       <div className="sr-only" aria-live="polite" aria-atomic="true">
         {!isReady
           ? 'Carregando reprodutor de áudio'
@@ -101,17 +100,17 @@ export default function PlayerControls({
           type="button"
           onClick={onTogglePlay}
           disabled={!isReady}
-          className="flex items-center justify-center min-w-[44px] min-h-[44px] w-11 h-11 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:scale-95 disabled:bg-slate-800 disabled:text-slate-600 text-white font-bold transition shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 focus:ring-offset-slate-900 shrink-0"
+          className="flex items-center justify-center min-w-[44px] min-h-[44px] w-11 h-11 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:scale-95 disabled:bg-slate-800 disabled:text-slate-600 text-white font-bold transition shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 shrink-0"
           title={isPlaying ? 'Pausar clipe (Ctrl + Espaço)' : 'Reproduzir clipe (Ctrl + Espaço)'}
           aria-label={isPlaying ? 'Pausar clipe de áudio' : 'Reproduzir clipe de áudio'}
           aria-pressed={isPlaying}
         >
           {isBuffering && isPlaying ? (
-            <Loader2 className="w-5 h-5 animate-spin text-white" />
+            <Loader2 className="w-5 h-5 animate-spin text-white" aria-hidden="true" />
           ) : isPlaying ? (
-            <Pause className="w-5 h-5 fill-current" />
+            <Pause className="w-5 h-5 fill-current" aria-hidden="true" />
           ) : (
-            <Play className="w-5 h-5 fill-current ml-0.5" />
+            <Play className="w-5 h-5 fill-current ml-0.5" aria-hidden="true" />
           )}
         </button>
 
@@ -120,11 +119,11 @@ export default function PlayerControls({
           type="button"
           onClick={() => onRewind && onRewind(5)}
           disabled={!isReady}
-          className="flex items-center justify-center gap-1 min-h-[44px] min-w-[44px] px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 disabled:opacity-50 text-slate-200 text-xs font-semibold border border-slate-700 transition focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 focus:ring-offset-slate-900 shrink-0"
+          className="flex items-center justify-center gap-1 min-h-[44px] min-w-[44px] px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 disabled:opacity-50 text-slate-200 text-xs font-semibold border border-slate-700 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 shrink-0"
           title="Voltar 5 segundos (Ctrl + Seta Esquerda)"
           aria-label="Voltar 5 segundos no áudio"
         >
-          <Undo2 className="w-4 h-4 text-indigo-400" />
+          <Undo2 className="w-4 h-4 text-indigo-400" aria-hidden="true" />
           <span>-5s</span>
         </button>
 
@@ -133,11 +132,11 @@ export default function PlayerControls({
           type="button"
           onClick={onReplay}
           disabled={!isReady}
-          className="flex items-center justify-center gap-1.5 min-h-[44px] min-w-[44px] px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 disabled:opacity-50 text-slate-200 text-xs font-semibold border border-slate-700 transition focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 focus:ring-offset-slate-900 shrink-0"
+          className="flex items-center justify-center gap-1.5 min-h-[44px] min-w-[44px] px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 disabled:opacity-50 text-slate-200 text-xs font-semibold border border-slate-700 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 shrink-0"
           title="Reiniciar o recorte do início (Ctrl + Seta Abaixo)"
           aria-label="Reiniciar o clipe de áudio do início"
         >
-          <RotateCcw className="w-4 h-4 text-indigo-400" />
+          <RotateCcw className="w-4 h-4 text-indigo-400" aria-hidden="true" />
           <span className="hidden sm:inline">Reiniciar</span>
         </button>
 
@@ -186,6 +185,6 @@ export default function PlayerControls({
         <span className="text-slate-700 hidden sm:inline" aria-hidden="true">•</span>
         <span className="text-slate-400 hidden sm:inline">Ctrl+↓ <span className="text-slate-600">(Reiniciar)</span></span>
       </div>
-    </div>
+    </section>
   );
 }

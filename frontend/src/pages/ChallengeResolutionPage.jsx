@@ -206,6 +206,14 @@ export default function ChallengeResolutionPage({ currentUser, onNavigateToSetti
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
+      {/* Skip Link para navegação exclusiva por teclado e leitores de tela (SCRUM-195 Cenário 1) */}
+      <a
+        href="#main-challenge-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:px-4 focus:py-2 focus:bg-indigo-600 focus:text-white focus:rounded-xl focus:text-xs focus:font-bold focus:shadow-lg"
+      >
+        Pular para o conteúdo do desafio
+      </a>
+
       {/* Cabeçalho Superior */}
       <header
         role="banner"
@@ -213,7 +221,7 @@ export default function ChallengeResolutionPage({ currentUser, onNavigateToSetti
       >
         <DictadleLogo size="md" subtitle="Desafio de Transcrição" />
 
-        <div className="flex items-center gap-2">
+        <nav aria-label="Navegação principal" className="flex items-center gap-2">
           {currentUser && (
             <span className="hidden md:inline-block text-xs text-slate-600 font-medium mr-2">
               Olá, <strong className="text-slate-800">{currentUser.username}</strong>
@@ -221,8 +229,9 @@ export default function ChallengeResolutionPage({ currentUser, onNavigateToSetti
           )}
 
           <button
+            type="button"
             onClick={() => navigate('/dashboard')}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
             title="Ir para o Dashboard"
             aria-label="Ir para o Dashboard"
           >
@@ -231,8 +240,9 @@ export default function ChallengeResolutionPage({ currentUser, onNavigateToSetti
           </button>
 
           <button
+            type="button"
             onClick={onNavigateToSettings}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
             title="Ir para configurações"
             aria-label="Ir para configurações"
           >
@@ -241,22 +251,24 @@ export default function ChallengeResolutionPage({ currentUser, onNavigateToSetti
           </button>
 
           <button
+            type="button"
             onClick={() => {
               clearChallengesMemoryCache();
               if (onLogout) onLogout();
             }}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition focus:outline-none focus:ring-2 focus:ring-rose-500"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500"
             title="Encerrar sessão"
             aria-label="Encerrar sessão"
           >
             <LogOut className="w-3.5 h-3.5" aria-hidden="true" />
             <span className="hidden sm:inline">Sair</span>
           </button>
-        </div>
+        </nav>
       </header>
 
       {/* Conteúdo Principal: Layout em 2 colunas no desktop (Player ampliado à esquerda, Input à direita) */}
       <main
+        id="main-challenge-content"
         role="main"
         className="flex-1 max-w-7xl mx-auto w-full px-3 sm:px-6 py-3 sm:py-5 space-y-4"
       >
