@@ -12,9 +12,9 @@ A versão colaborativa de trabalho da equipe fica no Google Drive / Jira, e as c
 | `tecnico/banco/` | DER do banco em formato editável DBML (`DER-Dictadle-v1.0.dbml` da R1 e `DER-Dictadle-v1.1.dbml` da R2) |
 | `release-1/` | Relatórios (`Relatorio-de-Metricas-R1.docx`, `Relatorio-de-Qualidade-R1.docx`, `Relatorio-do-Pipeline-R1.docx`) e `Release-Notes-R1.docx` |
 | `release-1/sprint-1/` | Plano, atas (Planning, Review e Retrospectiva no padrão oficial da equipe), acompanhamento e roteiro de testes da Sprint 1 |
-| `release-2/` | `Plano-da-Release-2.docx`, `Plano-de-Qualidade-e-Testes-Release-2.md` e `Relatorio-do-Pipeline-R2.docx` |
+| `release-2/` | `Plano-da-Release-2.docx`, `Plano-de-Qualidade-e-Testes-Release-2.md`, `Relatorio-de-Qualidade-R2.docx`, `Relatorio-de-Metricas-e-Riscos-R2.docx` e `Relatorio-do-Pipeline-R2.docx` |
 | `release-2/sprint-2/` | Atas da Sprint 2, acompanhamento, roteiro da Review, `Relatorio-de-Qualidade-Sprint-2.txt` e evidências em `testes/` |
-| `release-2/sprint-3/` | Pauta da Planning (17/11/2026), acompanhamento, pré-atas da Review/Retrospectiva (26/11/2026) e roteiros planejados em `testes/` |
+| `release-2/sprint-3/` | Atas da Sprint 3, acompanhamento, `Relatorio-de-Qualidade-Sprint-3.txt` e evidências de regressão em `testes/` |
 
 ## Onde colocar um documento novo
 

@@ -1,14 +1,9 @@
-# Roteiro Planejado — Validação de Respostas e Normalização (SCRUM-93 e SCRUM-110)
+# Evidências de Teste — Validação e Normalização (SCRUM-93, SCRUM-110 e SCRUM-196)
 
-Roteiro derivado dos critérios de aceite em Gherkin registrados no Jira para a Sprint 3 (`CT-38` a `CT-40` e `CT-47` a `CT-49` no `Plano-de-Teste.docx`).
+Casos `CT-38` a `CT-40` e `CT-47` a `CT-49` validados no ciclo de regressão em `26/11/2026`.
 
-## Critérios e casos planejados
-
-| História | Critério (Gherkin) | Casos no Plano | Status |
-| :--- | :--- | :--- | :--- |
-| `SCRUM-93` | Correção 100% ignorando caixa e pontuação (`POST /api/challenges/<id>/submit`) | `CT-38` | Pendente |
-| `SCRUM-93` | Classificação de palavras (`correct`, `incorrect`, `missing`) e cálculo de acurácia | `CT-39` | Pendente |
-| `SCRUM-93` | Rejeição de payload vazio (`400`/`422`), desafio inexistente (`404`) e sem JWT (`401`) | `CT-40` | Pendente |
-| `SCRUM-110` | Equivalência case-insensitive, remoção de pontuação e apóstrofos curvos (`’ -> '`) | `CT-47` | Pendente |
-| `SCRUM-110` | Colapso de múltiplos espaços/quebras e preservação do texto bruto no banco | `CT-48` | Pendente |
-| `SCRUM-110` | Submissão contendo apenas símbolos retorna `0%` sem crash | `CT-49` | Pendente |
+| História | Evidência Automatizada | Status |
+| :--- | :--- | :--- |
+| `SCRUM-93` | `backend/tests/unit/test_correction_service.py`, `backend/tests/integration/test_submit_challenge_route.py`, `frontend/tests/correction_scrum93.test.js` | Aprovado |
+| `SCRUM-110` | `backend/tests/unit/test_text_normalizer.py` | Aprovado |
+| `SCRUM-196` | `backend/tests/integration/test_performance_benchmarks.py` (otimização Levenshtein `< 50 ms`) | Aprovado |

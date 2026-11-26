@@ -1,8 +1,8 @@
-# Defeitos em Aberto para Correção — Sprint 3 (SCRUM-191 e SCRUM-192)
+# Evidências de Regressão — Bugs da Sprint 3 (SCRUM-191 e SCRUM-192)
 
-Bugs identificados na auditoria pós-Sprint 2 e registrados no Jira em `SCRUM Sprint 3`.
+Ambos os bugs identificados pós-Sprint 2 foram corrigidos, mesclados em `develop` e validados no ciclo de regressão em `26/11/2026` (**0 bugs em aberto no fechamento da Release 2**).
 
-| Chave | Título | Severidade / Prioridade | Story Points | Responsável | Critério de verificação (Regressão QA) |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| `SCRUM-192` | Bloqueio de edição em desafios com duração entre 5–9s ou 16–30s (`PUT /api/challenges/<id>` retorna `422`) | Alta / Média | `5` | Vitor Emanuel | Atualização parcial de `title` ou `is_active` retorna `200 OK` e regras entre `POST` e `PUT` consistentes |
-| `SCRUM-191` | Persistência de `challengesMemoryCache` após logout (`handleLogout`) ou edição administrativa na mesma sessão SPA | Média / Média | `3` | Vinícius Araújo | Logout/novo login sem F5 invalida o cache e consulta `GET /api/challenges/active` |
+| Chave | Título | Severidade | Evidência de Regressão | Status Final |
+| :--- | :--- | :--- | :--- | :--- |
+| `SCRUM-192` | Bloqueio HTTP 422 na edição de desafios com duração 5–9s ou 16–30s | Alta | PR #27 · `test_update_challenge_route.py`, `test_validators_challenge.py` | **Done (Aprovado QA)** |
+| `SCRUM-191` | Persistência de `challengesMemoryCache` após logout ou edição admin | Média | `frontend/tests/cache_invalidation_scrum191.test.js` (`5/5 passed`) | **Done (Aprovado QA)** |
