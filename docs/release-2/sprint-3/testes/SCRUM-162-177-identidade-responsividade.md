@@ -1,12 +1,9 @@
-# Roteiro Planejado — Identidade Visual e Responsividade (SCRUM-162 e SCRUM-177)
+# Evidências de Teste — Identidade Visual, Responsividade e Acessibilidade (SCRUM-162, SCRUM-177, SCRUM-195)
 
-Casos planejados `CT-50`, `CT-51`, `CT-56` e `CT-57` no `Plano-de-Teste.docx`.
+Casos `CT-50`, `CT-51`, `CT-56` e `CT-57` validados no ciclo de regressão em `26/11/2026`.
 
-## Critérios e casos planejados
-
-| História | Critério (Gherkin) | Casos no Plano | Status |
-| :--- | :--- | :--- | :--- |
-| `SCRUM-162` | Consistência da paleta, tipografia, logotipo e feedbacks semânticos em todas as rotas | `CT-50` | Pendente |
-| `SCRUM-162` | Contraste WCAG AA (`4.5:1`), `focus-visible` via `Tab` e padronização de modais/tabelas | `CT-51` | Pendente |
-| `SCRUM-177` | Prática do desafio em smartphone (`375px`) mantendo player `16:9` sem scroll horizontal | `CT-56` | Pendente |
-| `SCRUM-177` | Conforto com teclado virtual, modais em `< 768px` e redimensionamento `375px <-> 1440px` | `CT-57` | Pendente |
+| História / Task | Evidência Automatizada | Status |
+| :--- | :--- | :--- |
+| `SCRUM-162` | Design system roxo minimalista + `frontend/tests/correction_feedback_scrum94.test.js` | Aprovado |
+| `SCRUM-177` | `frontend/tests/responsiveness_scrum177.test.js` | Aprovado |
+| `SCRUM-195` | `frontend/tests/accessibility_scrum195.test.js` (HTML5 semântico, ARIA, live region, Skip Link, Esc) | Aprovado |
