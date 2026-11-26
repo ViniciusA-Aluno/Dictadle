@@ -78,8 +78,8 @@ export default function DeleteAccountPage({ currentUser, onBack, onAccountDelete
   }
 
   return (
-    <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4">
-      <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-xl max-w-lg w-full transition-all">
+    <div className="min-h-screen bg-slate-100 flex items-center justify-center p-3 sm:p-4 py-6 sm:py-12">
+      <div className="bg-white p-5 sm:p-8 rounded-2xl sm:rounded-3xl border border-slate-200 shadow-xl max-w-lg w-full transition-all">
         {/* Cabeçalho */}
         <div className="text-center mb-6">
           <div className="inline-flex bg-rose-100 text-rose-600 p-3.5 rounded-2xl mb-3 shadow-sm">

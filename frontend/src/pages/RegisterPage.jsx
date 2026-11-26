@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { authService } from '../services/api';
+import DictadleLogo from '../components/DictadleLogo';
 import { User, Mail, Lock, CheckCircle2, AlertCircle, Loader2, ArrowLeft, UserPlus } from 'lucide-react';
 
 export default function RegisterPage({ onNavigateToLogin }) {
@@ -86,14 +87,14 @@ export default function RegisterPage({ onNavigateToLogin }) {
   };
 
   return (
-    <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4">
-      <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-xl max-w-md w-full transition-all">
+    <div className="min-h-screen bg-slate-100 flex items-center justify-center p-3 sm:p-4 py-6 sm:py-12">
+      <div className="bg-white p-5 sm:p-8 rounded-2xl sm:rounded-3xl border border-slate-200 shadow-xl max-w-md w-full transition-all">
         {/* Cabeçalho */}
         <div className="text-center mb-6">
-          <div className="inline-flex bg-indigo-600 text-white p-3.5 rounded-2xl mb-3 shadow-md">
-            <UserPlus className="w-8 h-8" />
+          <div className="flex justify-center mb-4">
+            <DictadleLogo size="lg" subtitle="Desafio Diário de Listening" />
           </div>
-          <h2 className="text-2xl font-black text-slate-800 tracking-tight">Criar Conta no Dictadle</h2>
+          <h2 className="text-2xl font-black text-slate-800 tracking-tight font-display">Criar Conta no Dictadle</h2>
           <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
             Cadastre-se para começar a treinar seu listening com clipes reais e subir de nível.
           </p>

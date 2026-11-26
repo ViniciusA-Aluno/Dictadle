@@ -1,0 +1,57 @@
+// DER do Dictadle - versão 1.1 (Release 2)
+// Abra em https://dbdiagram.io (Import > DBML) para visualizar e exportar PNG/PDF.
+// Reflete backend/app/models/user.py e backend/app/models/challenge.py (Sprint 2) + user_attempts (Sprint 3).
+
+Project Dictadle {
+  database_type: 'PostgreSQL'
+  Note: '''
+  DER Dictadle - versão 1.1 (Release 2 - atualizado em 16/11/2026)
+  Implementado em R1 + S2: users, challenges.
+  Planejado para S3 (SCRUM-93 / SCRUM-110 / SCRUM-172): user_attempts.
+  '''
+}
+
+Table users {
+  id integer [pk, increment]
+  username varchar(80) [not null, unique, note: 'mínimo 3 caracteres']
+  email varchar(120) [not null, unique]
+  password_hash varchar(255) [not null]
+  role varchar(20) [not null, default: 'student', note: 'student | admin']
+  is_active boolean [not null, default: true]
+  is_2fa_enabled boolean [not null, default: false]
+  two_factor_secret varchar(64)
+  created_at timestamp [not null]
+
+  Note: 'R1 - implementada.'
+}
+
+Table challenges {
+  id integer [pk, increment]
+  title varchar(150) [not null]
+  video_url varchar(255) [not null, note: 'Zero Hosting: apenas referência externa do YouTube']
+  youtube_video_id varchar(32) [not null, note: 'ID de 11 caracteres indexado']
+  start_time_seconds integer [not null, note: '>= 0']
+  end_time_seconds integer [not null, note: '> start_time_seconds']
+  difficulty varchar(20) [not null, default: 'medium', note: 'easy | medium | hard']
+  accent varchar(50) [not null, default: 'American']
+  transcript_official text [not null, note: 'Anti-Cheat: jamais serializado em to_playback_dict()']
+  is_active boolean [not null, default: true]
+  created_at timestamp [not null]
+  updated_at timestamp
+
+  indexes {
+    youtube_video_id [name: 'ix_challenges_youtube_video_id']
+  }
+  Note: 'R2/S2 - implementada (SCRUM-128, SCRUM-87, SCRUM-88, SCRUM-90, SCRUM-91).'
+}
+
+Table user_attempts {
+  id integer [pk, increment]
+  user_id integer [not null, ref: > users.id]
+  challenge_id integer [not null, ref: > challenges.id]
+  submitted_transcript text [not null, note: 'SCRUM-110: texto bruto preservado antes da normalização']
+  accuracy_percentage float [not null, note: '0.0 a 100.0']
+  created_at timestamp [not null]
+
+  Note: 'R2/S3 - planejada (SCRUM-93 / SCRUM-110 / SCRUM-172).'
+}

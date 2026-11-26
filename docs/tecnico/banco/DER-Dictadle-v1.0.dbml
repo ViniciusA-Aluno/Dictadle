@@ -1,0 +1,26 @@
+// DER inicial do Dictadle - versão 1.0 (Release 1)
+// Abra em https://dbdiagram.io (Import > DBML) para visualizar e exportar PNG/PDF.
+// Reflete backend/app/models/user.py implementado na Sprint 1 (SCRUM-43 / SCRUM-44).
+
+Project Dictadle {
+  database_type: 'PostgreSQL'
+  Note: '''
+  DER Dictadle - versão 1.0 (Release 1 - 29/10/2026)
+  Tabela implementada na Sprint 1: users.
+  Demais entidades de desafios e tentativas planejadas para a Release 2.
+  '''
+}
+
+Table users {
+  id integer [pk, increment]
+  username varchar(80) [not null, unique, note: 'mínimo 3 caracteres']
+  email varchar(120) [not null, unique]
+  password_hash varchar(255) [not null, note: 'hash werkzeug/pbkdf2; nunca exposto em respostas']
+  role varchar(20) [not null, default: 'student', note: 'student | admin']
+  is_active boolean [not null, default: true, note: 'false quando ocorre soft delete']
+  is_2fa_enabled boolean [not null, default: false]
+  two_factor_secret varchar(64) [note: 'segredo TOTP base32 quando 2FA está habilitado']
+  created_at timestamp [not null]
+
+  Note: 'R1 - implementada (SCRUM-10, SCRUM-39, SCRUM-56, SCRUM-57, SCRUM-9/11/12).'
+}

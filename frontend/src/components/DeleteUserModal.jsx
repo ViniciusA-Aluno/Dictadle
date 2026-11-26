@@ -71,10 +71,10 @@ export default function DeleteUserModal({ user, isOpen, onClose, onSuccess, curr
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-lg w-full overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+    <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4">
+      <div className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200 shadow-2xl max-w-lg w-full max-h-[92vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
         {/* Cabeçalho */}
-        <div className="p-6 bg-rose-50/70 border-b border-rose-100 flex items-center justify-between">
+        <div className="p-5 sm:p-6 bg-rose-50/70 border-b border-rose-100 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-rose-600 text-white flex items-center justify-center shadow-md shadow-rose-200">
               <ShieldAlert className="w-5 h-5" />
@@ -98,7 +98,7 @@ export default function DeleteUserModal({ user, isOpen, onClose, onSuccess, curr
         </div>
 
         {/* Formulário / Conteúdo */}
-        <form onSubmit={handleDelete} className="p-6 space-y-4 text-xs">
+        <form onSubmit={handleDelete} className="p-5 sm:p-6 space-y-4 text-xs overflow-y-auto flex-1">
           {/* Alerta de Auto-Exclusão Bloqueada */}
           {isSelf ? (
             <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl text-amber-800 space-y-1.5">

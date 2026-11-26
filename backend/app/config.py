@@ -25,6 +25,11 @@ class Config:
     )
     FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
 
+    # Metadados de Deploy Blue/Green e Disponibilidade (DA-DIS-DEV-002 / SCRUM-22)
+    APP_VERSION = os.getenv("APP_VERSION", "2.0.0")
+    DEPLOYMENT_SLOT = os.getenv("DEPLOYMENT_SLOT", "blue")
+    INSTANCE_READY = os.getenv("INSTANCE_READY", "true").lower() in ("true", "1", "yes")
+
 class DevelopmentConfig(Config):
     DEBUG = True
 

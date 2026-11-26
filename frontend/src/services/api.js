@@ -7,6 +7,12 @@ const api = axios.create({
   },
 });
 
+// Inicialização síncrona do header de autorização a partir do localStorage no carregamento do módulo
+const savedToken = typeof window !== 'undefined' ? localStorage.getItem('dictadle_token') : null;
+if (savedToken) {
+  api.defaults.headers.common['Authorization'] = `Bearer ${savedToken}`;
+}
+
 export const setAuthToken = (token) => {
   if (token) {
     api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
@@ -16,6 +22,33 @@ export const setAuthToken = (token) => {
     localStorage.removeItem('dictadle_token');
   }
 };
+
+// Interceptor de requisição: assegura que o token atualizado sempre acompanhe requisições da API
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('dictadle_token');
+    if (token) {
+      config.headers = config.headers || {};
+      config.headers['Authorization'] = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// Interceptor de resposta: captura 401 (sessão expirada/inválida) e purga credenciais do localStorage
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      const url = error.config?.url || '';
+      if (!url.includes('/auth/login') && !url.includes('/auth/register')) {
+        setAuthToken(null);
+      }
+    }
+    return Promise.reject(error);
+  }
+);
 
 export const authService = {
   login: (email, password) => api.post('/auth/login', { email, password }),
@@ -35,6 +68,20 @@ export const authService = {
   getUsers: (params) => api.get('/users', { params }),
   getUserById: (userId) => api.get(`/users/${userId}`),
   updateUser: (userId, data) => api.put(`/users/${userId}`, data),
+};
+
+export const challengeService = {
+  createChallenge: (challengeData) => api.post('/challenges', challengeData),
+  getChallenges: (params) => api.get('/challenges', { params }),
+  getChallengeById: (challengeId) => api.get(`/challenges/${challengeId}`),
+  updateChallenge: (challengeId, challengeData) => api.put(`/challenges/${challengeId}`, challengeData),
+  getPlayback: (challengeId) => api.get(`/challenges/${challengeId}/playback`),
+  getDailyPlayback: () => api.get('/challenges/daily/playback'),
+  getActiveChallenges: () => api.get('/challenges/active'),
+  submitTranscription: (challengeId, submittedTranscript) =>
+    api.post(`/challenges/${challengeId}/submit`, {
+      submitted_transcript: submittedTranscript,
+    }),
 };
 
 export default api;

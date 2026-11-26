@@ -1,110 +1,245 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
+import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import StudentDashboard from './pages/StudentDashboard';
+import ChallengeResolutionPage, { clearChallengesMemoryCache } from './pages/ChallengeResolutionPage';
 import AdminUsersPage from './pages/AdminUsersPage';
 import SettingsPage from './pages/SettingsPage';
 import DeleteAccountPage from './pages/DeleteAccountPage';
-import { setAuthToken } from './services/api';
+import { setAuthToken, authService } from './services/api';
+import { Loader2 } from 'lucide-react';
 
-export default function App() {
+function AppRoutes() {
   const [currentUser, setCurrentUser] = useState(null);
-  const [currentPage, setCurrentPage] = useState('home'); // 'home' | 'settings' | 'delete_account'
-  const [authScreen, setAuthScreen] = useState('login'); // 'login' | 'register'
   const [loginSuccessNotice, setLoginSuccessNotice] = useState(null);
+  const [isInitializing, setIsInitializing] = useState(true);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // SCRUM-153: Restauração automática de sessão ao carregar a página (F5)
+  useEffect(() => {
+    const token = localStorage.getItem('dictadle_token');
+    if (token) {
+      setAuthToken(token);
+      authService.getProfile()
+        .then((res) => {
+          if (res.data?.user) {
+            setCurrentUser(res.data.user);
+          } else {
+            setAuthToken(null);
+            setCurrentUser(null);
+          }
+        })
+        .catch(() => {
+          // Token inválido, expirado ou erro de autenticação: limpa a sessão local
+          setAuthToken(null);
+          setCurrentUser(null);
+          clearChallengesMemoryCache();
+        })
+        .finally(() => {
+          setIsInitializing(false);
+        });
+    } else {
+      setIsInitializing(false);
+    }
+  }, []);
 
   const handleLoginSuccess = (user, token) => {
+    clearChallengesMemoryCache();
     setCurrentUser(user);
-    setCurrentPage('home');
+    // Redireciona para a página originalmente requisitada se houver, ou para a home do perfil
+    const destination = location.state?.from?.pathname || (user.role === 'admin' ? '/admin' : '/challenge');
+    navigate(destination, { replace: true });
   };
 
   const handleLogout = () => {
     setAuthToken(null);
     setCurrentUser(null);
-    setCurrentPage('home');
-    setAuthScreen('login');
     setLoginSuccessNotice(null);
+    clearChallengesMemoryCache();
+    navigate('/login');
   };
 
   const handleAccountDeleted = () => {
+    setAuthToken(null);
     setCurrentUser(null);
-    setCurrentPage('home');
-    setAuthScreen('login');
+    setLoginSuccessNotice('Sua conta foi excluída com sucesso.');
+    clearChallengesMemoryCache();
+    navigate('/login');
   };
 
   const handleUserUpdated = (updatedUser) => {
-    setCurrentUser(prev => ({
+    setCurrentUser((prev) => ({
       ...prev,
       ...updatedUser,
     }));
   };
 
-  // Se o usuário não está autenticado, exibe tela de login ou cadastro
-  if (!currentUser) {
-    if (authScreen === 'register') {
-      return (
-        <RegisterPage
-          onNavigateToLogin={(fromSuccess = false, msg = null) => {
-            if (fromSuccess && msg) {
-              setLoginSuccessNotice(msg);
-            }
-            setAuthScreen('login');
-          }}
-        />
-      );
-    }
-
+  // Exibe tela de carregamento suave enquanto verifica e reidrata a sessão do usuário
+  if (isInitializing) {
     return (
-      <LoginPage
-        onLoginSuccess={handleLoginSuccess}
-        onNavigateToRegister={() => {
-          setLoginSuccessNotice(null);
-          setAuthScreen('register');
-        }}
-        initialSuccessMessage={loginSuccessNotice}
-      />
-    );
-  }
-
-  // Página de Configurações da Conta (US-04)
-  if (currentPage === 'settings') {
-    return (
-      <SettingsPage
-        currentUser={currentUser}
-        onBack={() => setCurrentPage('home')}
-        onUserUpdated={handleUserUpdated}
-        onNavigateToDeleteAccount={() => setCurrentPage('delete_account')}
-      />
-    );
-  }
-
-  // Página de Exclusão de Conta (Acessível via Configurações)
-  if (currentPage === 'delete_account') {
-    return (
-      <DeleteAccountPage
-        currentUser={currentUser}
-        onBack={() => setCurrentPage('settings')}
-        onAccountDeleted={handleAccountDeleted}
-      />
-    );
-  }
-
-  // Redirecionamento por Papel pós-login (Aluno vs Administrador)
-  if (currentUser.role === 'admin') {
-    return (
-      <AdminUsersPage
-        currentUser={currentUser}
-        onNavigateToSettings={() => setCurrentPage('settings')}
-        onLogout={handleLogout}
-      />
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-indigo-600 mb-2" />
+        <p className="text-xs text-slate-500 font-medium">Carregando Dictadle...</p>
+      </div>
     );
   }
 
   return (
-    <StudentDashboard
-      currentUser={currentUser}
-      onNavigateToSettings={() => setCurrentPage('settings')}
-      onLogout={handleLogout}
-    />
+    <Routes>
+      {/* Rota Inicial / Landing Page */}
+      <Route
+        path="/"
+        element={
+          currentUser ? (
+            <Navigate to={currentUser.role === 'admin' ? '/admin' : '/challenge'} replace />
+          ) : (
+            <LandingPage currentUser={currentUser} />
+          )
+        }
+      />
+
+      {/* Rotas Públicas de Autenticação */}
+      <Route
+        path="/login"
+        element={
+          currentUser ? (
+            <Navigate to={currentUser.role === 'admin' ? '/admin' : '/challenge'} replace />
+          ) : (
+            <LoginPage
+              onLoginSuccess={handleLoginSuccess}
+              onNavigateToRegister={() => {
+                setLoginSuccessNotice(null);
+                navigate('/register');
+              }}
+              initialSuccessMessage={loginSuccessNotice}
+            />
+          )
+        }
+      />
+
+      <Route
+        path="/register"
+        element={
+          currentUser ? (
+            <Navigate to={currentUser.role === 'admin' ? '/admin' : '/challenge'} replace />
+          ) : (
+            <RegisterPage
+              onNavigateToLogin={(fromSuccess = false, msg = null) => {
+                if (fromSuccess && msg) {
+                  setLoginSuccessNotice(msg);
+                }
+                navigate('/login');
+              }}
+            />
+          )
+        }
+      />
+
+      {/* Rota do Desafio (Principal para Alunos - US-92) */}
+      <Route
+        path="/challenge"
+        element={
+          !currentUser ? (
+            <Navigate to="/login" replace state={{ from: location }} />
+          ) : (
+            <ChallengeResolutionPage
+              currentUser={currentUser}
+              onNavigateToSettings={() => navigate('/settings')}
+              onLogout={handleLogout}
+            />
+          )
+        }
+      />
+
+      {/* Dashboard Secundário do Estudante */}
+      <Route
+        path="/dashboard"
+        element={
+          !currentUser ? (
+            <Navigate to="/login" replace state={{ from: location }} />
+          ) : (
+            <StudentDashboard
+              currentUser={currentUser}
+              onNavigateToSettings={() => navigate('/settings')}
+              onLogout={handleLogout}
+            />
+          )
+        }
+      />
+
+      {/* Painel Administrativo */}
+      <Route
+        path="/admin"
+        element={
+          !currentUser ? (
+            <Navigate to="/login" replace state={{ from: location }} />
+          ) : currentUser.role !== 'admin' ? (
+            <Navigate to="/challenge" replace />
+          ) : (
+            <AdminUsersPage
+              currentUser={currentUser}
+              onNavigateToSettings={() => navigate('/settings')}
+              onLogout={handleLogout}
+            />
+          )
+        }
+      />
+
+      {/* Configurações da Conta */}
+      <Route
+        path="/settings"
+        element={
+          !currentUser ? (
+            <Navigate to="/login" replace state={{ from: location }} />
+          ) : (
+            <SettingsPage
+              currentUser={currentUser}
+              onBack={() => navigate(-1)}
+              onUserUpdated={handleUserUpdated}
+              onNavigateToDeleteAccount={() => navigate('/delete-account')}
+            />
+          )
+        }
+      />
+
+      {/* Exclusão de Conta */}
+      <Route
+        path="/delete-account"
+        element={
+          !currentUser ? (
+            <Navigate to="/login" replace state={{ from: location }} />
+          ) : (
+            <DeleteAccountPage
+              currentUser={currentUser}
+              onBack={() => navigate('/settings')}
+              onAccountDeleted={handleAccountDeleted}
+            />
+          )
+        }
+      />
+
+      {/* Redirecionamento Padrão */}
+      <Route
+        path="*"
+        element={
+          currentUser ? (
+            <Navigate to={currentUser.role === 'admin' ? '/admin' : '/challenge'} replace />
+          ) : (
+            <Navigate to="/" replace />
+          )
+        }
+      />
+    </Routes>
+  );
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AppRoutes />
+    </BrowserRouter>
   );
 }

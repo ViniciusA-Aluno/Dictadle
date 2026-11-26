@@ -14,5 +14,13 @@ backend/instance/
 *.db
 *.sqlite3
 
+# Cobertura de testes
+.coverage
+.coverage.*
+htmlcov/
+
 # Variaveis de ambiente
 .env
+
+# Regras de agentes locais
+.agents/
