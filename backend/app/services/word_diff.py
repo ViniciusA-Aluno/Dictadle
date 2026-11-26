@@ -65,6 +65,7 @@ class WordDiffService:
             "words_total": evaluation["words_total"],
             "words_correct": evaluation["words_correct"],
             "edit_distance": evaluation["edit_distance"],
+            "execution_time_ms": evaluation["execution_time_ms"],
             "is_perfect": is_perfect,
             "normalized_submitted": evaluation["normalized_submitted"],
             "normalized_expected": evaluation["normalized_expected"],

@@ -140,3 +140,38 @@ class TestPerformanceBenchmarksQ07:
         avg = sum(latencies) / len(latencies)
         print(f"\n[Q-07 Benchmark] GET /api/challenges (admin) -> Média: {avg*1000:.2f}ms | p95: {p95*1000:.2f}ms ({p95:.4f}s)")
         assert p95 < 2.0, f"Tempo de resposta p95 ({p95:.4f}s) excedeu o limite de 2s"
+
+    def test_scrum196_benchmark_validation_algorithm_and_submit_under_limits(
+        self, client, student_auth_headers, seed_challenges
+    ):
+        """
+        SCRUM-196 Cenários 1 e 3:
+        Valida que o tempo de computação do algoritmo de validação é < 50ms e o
+        tempo de resposta HTTP p95 do endpoint POST /api/challenges/<id>/submit
+        sob payloads de até 500 caracteres permanece < 100ms.
+        """
+        challenge_id = seed_challenges[0].id
+        max_payload_text = (" Official transcription text for challenge 1 with extra vocabulary words" * 8).strip()[:500]
+
+        http_latencies_ms = []
+        algo_latencies_ms = []
+
+        for _ in range(30):
+            start = time.perf_counter()
+            res = client.post(
+                f"/api/challenges/{challenge_id}/submit",
+                json={"submitted_transcript": max_payload_text},
+                headers=student_auth_headers,
+            )
+            elapsed_ms = (time.perf_counter() - start) * 1000.0
+            assert res.status_code == 200
+            data = res.get_json()
+            http_latencies_ms.append(elapsed_ms)
+            algo_latencies_ms.append(data["execution_time_ms"])
+
+        p95_algo_ms = calculate_percentile(algo_latencies_ms, 95)
+        p95_http_ms = calculate_percentile(http_latencies_ms, 95)
+
+        assert max(algo_latencies_ms) < 50.0, f"Algoritmo excedeu 50ms: {max(algo_latencies_ms):.2f}ms"
+        assert p95_algo_ms < 50.0
+        assert p95_http_ms < 100.0, f"HTTP p95 excedeu 100ms: {p95_http_ms:.2f}ms"
