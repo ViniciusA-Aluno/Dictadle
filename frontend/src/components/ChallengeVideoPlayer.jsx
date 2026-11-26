@@ -75,8 +75,7 @@ export default function ChallengeVideoPlayer({
   }
 
   return (
-    <div
-      role="region"
+    <section
       aria-label={`Reprodutor de vídeo: ${title}`}
       className="w-full space-y-2"
     >
@@ -89,37 +88,33 @@ export default function ChallengeVideoPlayer({
         {!isReady && (
           <div
             className="absolute inset-0 bg-slate-900 flex flex-col items-center justify-center text-slate-400 gap-3 z-10"
+            role="status"
             aria-live="polite"
           >
-            <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+            <Loader2 className="w-8 h-8 animate-spin text-indigo-500" aria-hidden="true" />
             <p className="text-xs font-medium">Carregando reprodutor oficial...</p>
           </div>
         )}
 
-        {/* Camada interativa superior e botão de Play centralizado quando o clipe está pausado */}
-        <div
-          role="button"
-          tabIndex={0}
-          className="absolute inset-0 z-10 cursor-pointer flex items-center justify-center transition-all bg-black/10 hover:bg-black/20 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-inset"
+        {/* Camada interativa semântica (HTML5 <button>) para Play/Pause acessível (SCRUM-195) */}
+        <button
+          type="button"
+          className="absolute inset-0 z-10 w-full h-full cursor-pointer flex items-center justify-center transition-all bg-black/10 hover:bg-black/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-inset"
           onClick={togglePlay}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              togglePlay();
-            }
-          }}
+          disabled={!isReady}
           title={isPlaying ? 'Clique para pausar' : 'Clique para reproduzir (Ctrl + Espaço)'}
           aria-label={isPlaying ? 'Pausar vídeo do desafio' : 'Reproduzir vídeo do desafio'}
+          aria-pressed={isPlaying}
         >
           {!isPlaying && isReady && (
-            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-indigo-600/90 hover:bg-indigo-600 text-white flex items-center justify-center shadow-2xl backdrop-blur-xs border-2 border-white/30 transition-all transform group-hover:scale-110 active:scale-95 animate-in fade-in zoom-in-95 duration-200">
-              <Play className="w-8 h-8 sm:w-10 sm:h-10 fill-current ml-1 text-white drop-shadow-md" />
-            </div>
+            <span className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-indigo-600/90 hover:bg-indigo-600 text-white flex items-center justify-center shadow-2xl backdrop-blur-xs border-2 border-white/30 transition-all transform group-hover:scale-110 active:scale-95 animate-in fade-in zoom-in-95 duration-200">
+              <Play className="w-8 h-8 sm:w-10 sm:h-10 fill-current ml-1 text-white drop-shadow-md" aria-hidden="true" />
+            </span>
           )}
-        </div>
+        </button>
       </div>
 
-      {/* Controles Customizados Dictadle (SCRUM-150 / DA-USA-I1-001) */}
+      {/* Controles Customizados Dictadle (SCRUM-150 / DA-USA-I1-001 / SCRUM-195) */}
       <PlayerControls
         isPlaying={isPlaying}
         isBuffering={isBuffering}
@@ -132,6 +127,6 @@ export default function ChallengeVideoPlayer({
         onRewind={rewind}
         onSeekRelative={seekRelative}
       />
-    </div>
+    </section>
   );
 }

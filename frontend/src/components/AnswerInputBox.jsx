@@ -96,12 +96,15 @@ export default function AnswerInputBox({
   };
 
   return (
-    <div className="w-full h-full flex flex-col bg-white rounded-2xl border-2 border-indigo-200/90 shadow-md p-4 transition-all focus-within:border-indigo-600 focus-within:ring-4 focus-within:ring-indigo-100/70">
+    <section
+      aria-label="Área de resposta da transcrição"
+      className="w-full h-full flex flex-col bg-white rounded-2xl border-2 border-indigo-200/90 shadow-md p-4 transition-all focus-within:border-indigo-600 focus-within:ring-4 focus-within:ring-indigo-100/70"
+    >
       <form onSubmit={handleSubmit} className="flex flex-col flex-1 h-full gap-3 justify-between">
         {/* Cabeçalho de Destaque da Área de Resposta */}
         <div className="flex items-center justify-between pb-1 border-b border-slate-100/80 shrink-0">
           <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700">
-            <span className="w-2 h-2 rounded-full bg-indigo-600 animate-pulse" />
+            <span className="w-2 h-2 rounded-full bg-indigo-600 animate-pulse" aria-hidden="true" />
             <span>Sua Resposta</span>
           </div>
           <span className="text-[11px] text-slate-400 hidden sm:inline">
@@ -130,7 +133,12 @@ export default function AnswerInputBox({
             rows={4}
             placeholder={placeholder}
             aria-label="Campo de transcrição do ditado"
-            aria-describedby="transcription-char-counter transcription-shortcut-hint"
+            aria-invalid={Boolean(submitError)}
+            aria-describedby={
+              submitError
+                ? 'transcription-char-counter transcription-shortcut-hint transcription-submit-error'
+                : 'transcription-char-counter transcription-shortcut-hint'
+            }
             className={`w-full flex-1 resize-none text-slate-800 placeholder-slate-400 text-sm sm:text-base outline-none bg-transparent transition-opacity leading-relaxed ${
               isSubmitting || disabled ? 'opacity-50 cursor-not-allowed' : ''
             }`}
@@ -195,12 +203,12 @@ export default function AnswerInputBox({
             >
               {isSubmitting ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
                   <span>Enviando...</span>
                 </>
               ) : (
                 <>
-                  <Send className="w-4 h-4" />
+                  <Send className="w-4 h-4" aria-hidden="true" />
                   <span>Submeter Transcrição</span>
                 </>
               )}
@@ -208,9 +216,10 @@ export default function AnswerInputBox({
           </div>
         </div>
 
-        {/* Alerta de erro de submissão preservando o texto digitado (SCRUM-109 Cenário 5) */}
+        {/* Alerta de erro de submissão preservando o texto digitado (SCRUM-109 Cenário 5 / SCRUM-195) */}
         {submitError && (
           <div
+            id="transcription-submit-error"
             role="alert"
             className="flex items-center gap-2 rounded-xl bg-rose-50 border border-rose-200 px-3 py-2 text-xs text-rose-700 font-medium"
           >
@@ -219,6 +228,6 @@ export default function AnswerInputBox({
           </div>
         )}
       </form>
-    </div>
+    </section>
   );
 }
