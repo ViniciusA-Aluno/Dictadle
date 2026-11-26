@@ -65,6 +65,12 @@ O sistema atenderá múltiplos usuários, divididos em dois perfis de acesso:
 - **DevOps (Vitor):** Configurar o deploy automatizado em ambiente de homologação, garantir a estabilidade do pipeline de Integração Contínua (CI) para as novas funcionalidades e gerenciar o versionamento da release.
 - **QA (Matheus):** Elaborar e executar os casos de teste para a API de vídeos e o envio de respostas, registrar os novos bugs com evidências e gerar o relatório de qualidade da release.
 
+### Release 3
+- **PO (Matheus):** Repriorização baseada em métricas e feedback, com justificativa de mudanças de escopo; backlog saudável (itens prontos para a próxima sprint); release notes.
+- **Scrum Master (Vitor):** Análise das métricas com ajustes propostos ao time; retrospectiva de release olhando o processo como um todo; atenção à sprint encurtada pelo recesso.
+- **DevOps (Matheus):** Pipeline evoluído (análise estática, cobertura de testes ou similar); deploy repetível; tempo de resposta a falhas de pipeline; release versionada.
+- **QA (Vinicius):** Regressão ampliada com os testes das releases anteriores; análise de tendência de bugs; relatório de qualidade com métricas comparadas às releases anteriores.
+
 ---
 
 ## Como Executar o Projeto Localmente (PostgreSQL Nativo)
